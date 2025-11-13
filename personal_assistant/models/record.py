@@ -1,15 +1,23 @@
 from personal_assistant.models.field import Name, Phone, Birthday
-from personal_assistant.models.exceptions import PhoneAlreadyExistsError, PhoneNotFoundError
+from personal_assistant.models.exceptions import (
+    PhoneAlreadyExistsError,
+    PhoneNotFoundError,
+)
+
 
 class Record:
     def __init__(self, name):
         self.name = Name(name)
-        self.phones:list[Phone] = []
+        self.phones: list[Phone] = []
         self.birthday = None
+        self.email = None
+        self.address = None
 
     def add_phone(self, phone: str) -> None:
         if self.find_phone(phone):
-            raise PhoneAlreadyExistsError(f"Phone {phone} already exists for {self.name}")
+            raise PhoneAlreadyExistsError(
+                f"Phone {phone} already exists for {self.name}"
+            )
         phone_obj = Phone(phone)
         self.phones.append(phone_obj)
 
