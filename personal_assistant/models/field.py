@@ -4,7 +4,7 @@ from personal_assistant.models.exceptions import (
     InvalidPhoneFormatError,
     InvalidBirthdayFormatError,
     BirthdayInFutureError,
-    InvalidEmailFormatError,
+    InvalidEmailFormatError
 )
 
 __all__ = ["Field", "Name", "Birthday", "Phone"]
@@ -46,7 +46,7 @@ class Phone(Field):
         super().__init__(normalized)
         
     @staticmethod                       
-    def normalize_ua_phone(phone: str) -> str:
+    def normalize_ua_phone(phone: str) -> str | None:
         digits = re.sub(r"\D", "", phone)
 
         UA_CODES = {
