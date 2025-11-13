@@ -32,3 +32,8 @@ class PhoneAlreadyExistsError(ContactBotError):
 class RecordAlreadyExistsError(ContactBotError):
     """Raised when trying to add a Record that already exists in AddressBook."""
     pass
+
+class InvalidEmailFormatError(ValueError, ContactBotError):
+    """Raised when trying to add an email in wrong format xxx@xxx.com"""
+    def __init__(self, *args: object) -> None:
+        super().__init__(f"User email should be in the right format xxx@xxx.xxx")
