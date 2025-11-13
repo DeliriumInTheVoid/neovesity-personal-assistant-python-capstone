@@ -1,1 +1,2 @@
 pytest>=8.4.2
+textual==6.6.0
