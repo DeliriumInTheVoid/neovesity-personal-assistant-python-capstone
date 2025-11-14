@@ -32,3 +32,25 @@ class PhoneAlreadyExistsError(ContactBotError):
 class RecordAlreadyExistsError(ContactBotError):
     """Raised when trying to add a Record that already exists in AddressBook."""
     pass
+
+class InvalidTitleFormatError(ValueError, ContactBotError):
+    """Raised when a title has an invalid format."""
+    def __init__(self, title: str):
+        super().__init__(f"Invalid title format: '{title}'. Title must be more than 5 symbols.")
+
+class InvalidTagFormatError(ValueError, ContactBotError):
+    """Raised when a tag has an invalid format."""
+    def __init__(self, tag: str):
+        super().__init__(f"Invalid tag format: '{tag}'. Tag must be more than 3 symbols and cannot contain % or special symbols.")
+
+class NoteNotFoundError(ContactBotError):
+    """Raised when a specific note is not found in NotesBook."""
+    pass
+
+class NoteAlreadyExistsError(ContactBotError):
+    """Raised when trying to add a Note that already exists in NotesBook."""
+    pass
+
+class TagAlreadyExistsError(ContactBotError):
+    """Raised when trying to add a tag that already exists in a Note."""
+    pass
