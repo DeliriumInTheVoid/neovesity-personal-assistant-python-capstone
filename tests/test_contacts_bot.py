@@ -11,7 +11,7 @@ from personal_assistant.models.exceptions import (
     PhoneNotFoundError, RecordAlreadyExistsError
 )
 from personal_assistant.cli.args_parsers import parse_input, ArgsParser
-from personal_assistant.services.commands import (
+from personal_assistant.use_cases.commands import (
     add_contact, change_contact, show_phone, add_birthday,
     show_birthday, show_upcoming_birthdays, show_all,
     add_contact_command, change_contact_command, show_phone_command,

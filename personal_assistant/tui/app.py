@@ -13,11 +13,12 @@ from textual.widgets import (
 )
 
 from personal_assistant.cli.contacts_bot import save_data, load_data, parse_input
+from personal_assistant.use_cases.commands import get_command
 from personal_assistant.tui.screens.help.help import HelpScreen
 from personal_assistant.tui.screens.all_contacts import AllContactsScreen
 from personal_assistant.tui.screens.add_contact import AddContactScreen
 from personal_assistant.tui.screens.birthday import BirthdaysScreen
-from personal_assistant.services.commands import add_contact
+from personal_assistant.use_cases.commands import add_contact
 
 
 class AddressBookApp(App):

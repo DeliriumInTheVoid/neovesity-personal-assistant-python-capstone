@@ -1,8 +1,5 @@
-from personal_assistant.models.field import Name, Phone, Birthday
-from personal_assistant.models.exceptions import (
-    PhoneAlreadyExistsError,
-    PhoneNotFoundError,
-)
+from personal_assistant.models.field import Email, Name, Phone, Birthday
+from personal_assistant.models.exceptions import PhoneAlreadyExistsError, PhoneNotFoundError
 
 
 class Record:
@@ -43,6 +40,13 @@ class Record:
 
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
+
+    def add_email(self, email: str) -> None:
+        email_obj = Email(email)                     # Format validation is inside email class
+        self.email = email_obj.value
+
+    def add_address(self, address: str) -> None:     # ? just anything in string or should we add validation?
+        self.address = address
 
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
