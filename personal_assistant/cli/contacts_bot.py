@@ -1,7 +1,7 @@
 import pickle
 from pathlib import Path
 from personal_assistant.cli.args_parsers import parse_input
-from personal_assistant.services.commands import get_command
+from personal_assistant.use_cases.commands import get_command
 from personal_assistant.models.address_book import AddressBook
 
 
