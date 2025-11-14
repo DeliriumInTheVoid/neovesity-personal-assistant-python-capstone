@@ -4,7 +4,7 @@ from personal_assistant.models.exceptions import (
     InvalidPhoneFormatError,
     InvalidBirthdayFormatError,
     BirthdayInFutureError,
-    InvalidEmailFormatError
+    InvalidEmailFormatError,
     InvalidTitleFormatError,
     InvalidTagFormatError,
 )
