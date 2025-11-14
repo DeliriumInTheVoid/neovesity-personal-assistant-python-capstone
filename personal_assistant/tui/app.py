@@ -116,6 +116,7 @@ class AddressBookApp(App):
 
     #form-buttons Button {
         margin: 0 1;
+    }
 
     NoteFormScreen {
         layout: vertical;
@@ -169,12 +170,6 @@ class AddressBookApp(App):
         margin-top: 1;
         margin-bottom: 1;
         min-height: 1;
-    }
-
-    #form-buttons {
-        align: center;
-        margin-top: 1;
-        height: 3;
     }
 
     #save-button {
