@@ -67,7 +67,8 @@ class AddressBookApp(App):
         width: 100%;
     }
 
-        AddContactScreen {
+
+    AddContactScreen {
         align: center middle;
     }
 
@@ -115,6 +116,69 @@ class AddressBookApp(App):
 
     #form-buttons Button {
         margin: 0 1;
+
+    NoteFormScreen {
+        layout: vertical;
+    }
+
+    #form-container {
+        margin: 1;
+        padding: 1;
+    }
+
+    #form-fields {
+        height: auto;
+        margin: 1;
+    }
+
+    .field-label {
+        margin-top: 1;
+        margin-bottom: 0;
+        text-style: bold;
+    }
+
+    #title-input {
+        width: 100%;
+        margin-bottom: 1;
+    }
+
+    #creation-date-display {
+        width: 100%;
+        margin-bottom: 1;
+        padding: 1;
+        background: $surface;
+        border: solid $primary;
+    }
+
+    .readonly-field {
+        color: $text-muted;
+    }
+
+    #description-input {
+        width: 100%;
+        height: 10;
+        margin-bottom: 1;
+    }
+
+    #tags-input {
+        width: 100%;
+        margin-bottom: 1;
+    }
+
+    #error-message {
+        margin-top: 1;
+        margin-bottom: 1;
+        min-height: 1;
+    }
+
+    #form-buttons {
+        align: center;
+        margin-top: 1;
+        height: 3;
+    }
+
+    #save-button {
+        margin-right: 2;
     }
     """
 
