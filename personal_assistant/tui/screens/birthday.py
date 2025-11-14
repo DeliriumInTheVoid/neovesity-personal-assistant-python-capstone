@@ -39,5 +39,5 @@ class BirthdaysScreen(Screen):
             table.add_row("[italic]No upcoming birthdays found.[/italic]")
             return
 
-        for i, user in enumerate(upcoming, start=1):
-            table.add_row(str(i), user["name"], user["congratulation_date"])
+        for i, (record, date_) in enumerate(upcoming, start=1):
+            table.add_row(str(i), record.name.value, str(date_))

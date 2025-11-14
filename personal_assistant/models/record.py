@@ -1,18 +1,20 @@
 from personal_assistant.models.field import Email, Name, Phone, Birthday
 from personal_assistant.models.exceptions import PhoneAlreadyExistsError, PhoneNotFoundError
-import re
+
 
 class Record:
     def __init__(self, name):
         self.name = Name(name)
-        self.phones:list[Phone] = []
+        self.phones: list[Phone] = []
         self.birthday = None
         self.email = None
         self.address = None
 
     def add_phone(self, phone: str) -> None:
         if self.find_phone(phone):
-            raise PhoneAlreadyExistsError(f"Phone {phone} already exists for {self.name}")
+            raise PhoneAlreadyExistsError(
+                f"Phone {phone} already exists for {self.name}"
+            )
         phone_obj = Phone(phone)
         self.phones.append(phone_obj)
 
@@ -43,14 +45,8 @@ class Record:
         email_obj = Email(email)                     # Format validation is inside email class
         self.email = email_obj.value
 
-    def add_address(self, address: str) -> None:     # ? just anything in string or should we add validation? 
+    def add_address(self, address: str) -> None:     # ? just anything in string or should we add validation?
         self.address = address
-    
-
-
-
-
-
 
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"

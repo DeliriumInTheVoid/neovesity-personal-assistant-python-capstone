@@ -18,8 +18,11 @@ def input_error(expected_format: str):
             except ValueError:
                 return f"Invalid value. Expected: {expected_format}"
 
-        inner.usage = expected_format # attach usage info to the inner function for help command
+        inner.usage = (
+            expected_format  # attach usage info to the inner function for help command
+        )
         return inner
+
     return decorator
 
 
@@ -29,6 +32,7 @@ def handle_unknown_command(func: Callable) -> Callable:
     When a KeyError is caught, it returns an error message and shows the help command.
     Returns a "Null Object" function that does nothing for unknown commands.
     """
+
     def inner(command_id: str):
         try:
             return func(command_id)
@@ -36,16 +40,18 @@ def handle_unknown_command(func: Callable) -> Callable:
             err_msg = f"[bold red]🦥 Uhh... I looked everywhere. No such '{command_id}'.[/bold red]"
             err_msg += "\n" + show_help_command()
             return lambda args, book: err_msg
+
     return inner
 
 
 @input_error("add [name] [phone]")
-def add_contact_command(args:list[str], book: AddressBook) -> str:
+def add_contact_command(args: list[str], book: AddressBook) -> str:
     parser = ArgsParser(args)
     return add_contact(parser.get_next(), parser.get_next(), book)
 
 
-def add_contact(name: str, phone: str, book: AddressBook) -> str:
+def add_contact(args, book: AddressBook) -> str:
+    name, phone, *_ = args
     record = book.find(name)
     if record is None:
         record = Record(name)
@@ -63,7 +69,7 @@ def change_contact_command(args: list[str], book: AddressBook) -> str:
     return change_contact(parser.get_next(), parser.get_next(), parser.get_next(), book)
 
 
-def change_contact(name: str, old_phone: str, new_phone:str, book: AddressBook) -> str:
+def change_contact(name: str, old_phone: str, new_phone: str, book: AddressBook) -> str:
     record = book[name]
     record.edit_phone(old_phone, new_phone)
     return f"Contact '{name}' updated with new phone number {new_phone}."
@@ -77,7 +83,7 @@ def show_phone_command(args: list[str], book: AddressBook) -> str:
 
 def show_phone(name: str, book: AddressBook) -> str:
     contacts = book[name].phones
-    phones_list = ', '.join(str(phone) for phone in contacts)
+    phones_list = ", ".join(str(phone) for phone in contacts)
     return f"Contact '{name}' has phone numbers: {phones_list}"
 
 
@@ -130,7 +136,7 @@ def show_upcoming_birthdays(book: AddressBook, days: int = 7) -> str:
             f" - {record.name}: "
             f"(Birthday: {record.birthday.value.strftime('%d.%m')}) -> Congratulate on {congratulate_date_str}"
         )
-    return '\n'.join(result_lines)
+    return "\n".join(result_lines)
 
 
 def show_all_command(args: list[str], book: AddressBook) -> str:
@@ -141,7 +147,7 @@ def show_all(book: AddressBook) -> str:
     if len(book) == 0:
         return "No contacts available."
 
-    return f"All contacts:\n" + '\n'.join(str(record) for record in book.values())
+    return f"All contacts:\n" + "\n".join(str(record) for record in book.values())
 
 
 def search_command(args: list[str], book: AddressBook) -> str:
@@ -173,12 +179,12 @@ def show_help_command(args: list[str] = None, book: AddressBook = None) -> str:
 
     result_lines = ["Available commands:", "-------------------"]
     for name, func in COMMAND_HANDLERS.items():
-        usage = getattr(func, 'usage', None)
+        usage = getattr(func, "usage", None)
         if usage:
             result_lines.append(f"  {usage}")
         else:
             result_lines.append(f"  {name}")
-    return '\n'.join(result_lines)
+    return "\n".join(result_lines)
 
 
 def hello_command(args: list[str], book: AddressBook) -> str:
@@ -186,18 +192,18 @@ def hello_command(args: list[str], book: AddressBook) -> str:
 
 
 COMMAND_HANDLERS: dict[str, Callable[[list[str], AddressBook], None]] = {
-    "help": show_help_command,                                      # help
-    "hello": hello_command,                                         # hello
-    "add-contact": add_contact_command,                             # add [ім'я] [телефон]
-    "change-contact": change_contact_command,                       # change [ім'я] [старий телефон] [новий телефон]
-    "phone": show_phone_command,                                    # phone [ім'я]
-    "all": show_all_command,                                        # all
-    "add-birthday": add_birthday_command,                           # add-birthday [ім'я] [дата народження]
-    "show-birthday": show_birthday_command,                         # show-birthday [ім'я]
-    "birthdays": show_upcoming_birthdays_command,                   # birthdays [кількість днів]=7
-    "search": search_command,                                       # search [query]
+    "help": show_help_command,  # help
+    "hello": hello_command,  # hello
+    "add-contact": add_contact_command,  # add [ім'я] [телефон]
+    "change-contact": change_contact_command,  # change [ім'я] [старий телефон] [новий телефон]
+    "phone": show_phone_command,  # phone [ім'я]
+    "all": show_all_command,  # all
+    "add-birthday": add_birthday_command,  # add-birthday [ім'я] [дата народження]
+    "show-birthday": show_birthday_command,  # show-birthday [ім'я]
+    "birthdays": show_upcoming_birthdays_command,  # birthdays [кількість днів]=7
+    "search": search_command,  # search [query]
     # clear
-    "exit": lambda args, contacts: print("Good bye!"),              # close або exit
+    "exit": lambda args, contacts: print("Good bye!"),  # close або exit
 }
 
 
