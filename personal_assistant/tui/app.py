@@ -13,7 +13,7 @@ from textual.widgets import (
 )
 
 from personal_assistant.cli.contacts_bot import save_data, load_data, parse_input
-from personal_assistant.services.commands import get_command
+from personal_assistant.use_cases.commands import get_command
 from personal_assistant.tui.screens.help.help import HelpScreen
 
 
@@ -62,6 +62,70 @@ class AddressBookApp(App):
     #birthdays-table {
         height: 100%;
         width: 100%;
+    }
+
+    NoteFormScreen {
+        layout: vertical;
+    }
+
+    #form-container {
+        margin: 1;
+        padding: 1;
+    }
+
+    #form-fields {
+        height: auto;
+        margin: 1;
+    }
+
+    .field-label {
+        margin-top: 1;
+        margin-bottom: 0;
+        text-style: bold;
+    }
+
+    #title-input {
+        width: 100%;
+        margin-bottom: 1;
+    }
+
+    #creation-date-display {
+        width: 100%;
+        margin-bottom: 1;
+        padding: 1;
+        background: $surface;
+        border: solid $primary;
+    }
+
+    .readonly-field {
+        color: $text-muted;
+    }
+
+    #description-input {
+        width: 100%;
+        height: 10;
+        margin-bottom: 1;
+    }
+
+    #tags-input {
+        width: 100%;
+        margin-bottom: 1;
+    }
+
+    #error-message {
+        margin-top: 1;
+        margin-bottom: 1;
+        min-height: 1;
+    }
+
+    #form-buttons {
+        align: center;
+        margin-top: 1;
+        height: 3;
+    }
+
+    #save-button {
+        margin-right: 2;
     }
     """
 

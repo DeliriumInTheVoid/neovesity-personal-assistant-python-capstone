@@ -210,3 +210,5 @@ __marimo__/
 # Pickle files
 *.pkl
 *.pkl.bak
+/.venv_mac/
+/.venv_win/
