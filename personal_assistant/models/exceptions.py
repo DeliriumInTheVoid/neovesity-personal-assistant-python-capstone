@@ -12,8 +12,8 @@ class PhoneNotFoundError(ContactBotError):
 
 class InvalidPhoneFormatError(ValueError, ContactBotError):
     """Raised when a phone number has an invalid format."""
-    def __init__(self, phone: str):
-        super().__init__(f"Invalid phone format: '{phone}'. Phone must be 10 digits.")
+    def __init__(self, message: str):
+        super().__init__(message)
 
 class InvalidBirthdayFormatError(ValueError, ContactBotError):
     """Raised when a birthday has an invalid format."""

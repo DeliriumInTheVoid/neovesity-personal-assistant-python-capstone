@@ -7,7 +7,7 @@ class AddressBook(UserDict):
     def __setitem__(self, key, value):
         if not isinstance(value, Record):
             raise ValueError("Value must be an instance of Record.")
-        if key != value.name.value:
+        if key != value.first_name.value:
             raise ValueError("Key must match the Record's name.")
         if key in self.data:
             raise RecordAlreadyExistsError(f"Contact '{key}' already exists.")
@@ -24,7 +24,7 @@ class AddressBook(UserDict):
         super().__delitem__(key)
 
     def add_record(self, record: Record):
-        self[record.name.value] = record
+        self[record.first_name.value] = record
 
     def find(self, name:str) -> Record | None:
         if name not in self:

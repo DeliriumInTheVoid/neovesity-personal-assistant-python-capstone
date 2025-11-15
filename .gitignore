@@ -210,5 +210,10 @@ __marimo__/
 # Pickle files
 *.pkl
 *.pkl.bak
+
+# Virtual Environments for specific OS
 /.venv_mac/
 /.venv_win/
+
+#
+._*

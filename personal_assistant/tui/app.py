@@ -12,13 +12,11 @@ from textual.widgets import (
     Input,
 )
 
-from personal_assistant.cli.contacts_bot import save_data, load_data, parse_input
-from personal_assistant.use_cases.commands import get_command
+from personal_assistant.cli.args_parsers import parse_input
+from personal_assistant.presenters.presenters_registry import PresentersRegistry
 from personal_assistant.tui.screens.help.help import HelpScreen
-from personal_assistant.tui.screens.all_contacts import AllContactsScreen
-from personal_assistant.tui.screens.add_contact import AddContactScreen
-from personal_assistant.tui.screens.birthday import BirthdaysScreen
-from personal_assistant.use_cases.commands import add_contact
+from personal_assistant.storage.address_book import AddressBookStorage
+from personal_assistant.storage.notes_storage import NotesStorage
 
 
 class AddressBookApp(App):
@@ -184,15 +182,17 @@ class AddressBookApp(App):
     ]
 
     def __init__(
-        self,
-        driver_class: Type[Driver] | None = None,
-        css_path=None,
-        watch_css: bool = False,
-        ansi_color: bool = False,
+            self,
+            driver_class: Type[Driver] | None = None,
+            css_path = None,
+            watch_css: bool = False,
+            ansi_color: bool = False,
     ):
         super().__init__(driver_class, css_path, watch_css, ansi_color)
         self.log_widget = None
-        self.book = None
+        self.address_book_storage = AddressBookStorage()
+        self.notes_storage = NotesStorage()
+        self.command_registry = PresentersRegistry(self.address_book_storage, self.notes_storage)
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -214,8 +214,6 @@ class AddressBookApp(App):
 
     def on_mount(self) -> None:
         """Called when app is first mounted."""
-        self.book = load_data()
-
         self.log_widget = self.query_one(RichLog)
 
         self.log_widget.write("[bold green]Welcome to the assistant bot![/bold green]")
@@ -228,9 +226,8 @@ class AddressBookApp(App):
     async def action_quit(self) -> None:
         """Called when the user write exit."""
 
-        self.log_widget.write("[bold red]Saving data... Good bye!👋[/bold red]")
-        save_data(self.book, True)
-        await asyncio.sleep(2)
+        self.log_widget.write("[bold red]Good bye!👋[/bold red]")
+        await asyncio.sleep(1)
         self.exit()
 
     def action_show_help(self) -> None:
@@ -256,78 +253,91 @@ class AddressBookApp(App):
 
         self.log_widget.write(f"> {user_input}")
 
-        command, args = parse_input(user_input)
+        command_id, args = parse_input(user_input)
 
-        #     if command_id == "exit":
+        if command_id == "exit" or command_id == "close":
+            await self.action_quit()
+            return
+
+        if command_id == "clear":
+            self.log_widget.clear()
+            return
+
+        command = self.command_registry.get(command_id)
+
+        if not command:
+            self.log_widget.write(f"[bold red]🦥 Uhh... I looked everywhere. No such '{command_id}'.[/bold red]")
+            help_command = self.command_registry.get("help")
+            if help_command:
+                await help_command.execute_tui(self, [])
+            return
+
+        try:
+            await command.execute_tui(self, args)
+        except Exception as e:
+            self.log_widget.write(f"[bold red]An error occurred: {e}[/bold red]")
+
+
+        # match command_id:
+        #     case "hello":
+        #         self.log_widget.write("How can I help you?")
+        #
+        #     case "help":
+        #         self.push_screen(HelpScreen())
+        #
+        #     case "add-contact":
+        #         if not args:
+        #
+        #             self.push_screen(
+        #                 AddContactScreen(self.book), self.log_operation_result
+        #             )
+        #         else:
+        #             self.log_widget.write(add_contact(args, self.book))
+        #
+        #     case "change-contact":
+        #         if not args:
+        #             self.log_widget.write(
+        #                 "[bold red]Please provide a name to edit. (e.g., 'change-contact Yura')[/bold red]"
+        #             )
+        #             return
+        #
+        #         name_to_edit = args[0]
+        #
+        #         found_record = None
+        #         name_to_edit_lower = name_to_edit.lower()
+        #
+        #         for record_name in self.book.data.keys():
+        #             if record_name.lower() == name_to_edit_lower:
+        #                 found_record = self.book.data[record_name]
+        #                 break
+        #
+        #         if found_record:
+        #
+        #             self.push_screen(
+        #                 AddContactScreen(self.book, record_to_edit=found_record),
+        #                 self.log_operation_result,
+        #             )
+        #         else:
+        #             self.log_widget.write(
+        #                 f"[bold red]Contact '{name_to_edit}' not found.[/bold red]"
+        #             )
+        #
+        #     case "all":
+        #         if not self.book.data:
+        #             self.log_widget.write("Contacts list is empty")
+        #         else:
+        #             self.push_screen(AllContactsScreen(self.book))
+        #
+        #     case "birthdays":
+        #         self.push_screen(BirthdaysScreen(self.book))
+        #
+        #     case "clear":
+        #         self.log_widget.clear()
+        #
+        #     case "exit" | "close":
         #         await self.action_quit()
-        #         return
-
-        #     self.log_widget.write(get_command(command_id)(args, self.book))
-        # except KeyboardInterrupt:
-        #     self.log_widget.write(
-        #         "[bold red]🦥 Uhh... I looked everywhere. No such command_id.[/bold red]"
-        #     )
-
-        match command:
-            case "hello":
-                self.log_widget.write("How can I help you?")
-
-            case "help":
-                self.push_screen(HelpScreen())
-
-            case "add-contact":
-                if not args:
-
-                    self.push_screen(
-                        AddContactScreen(self.book), self.log_operation_result
-                    )
-                else:
-                    self.log_widget.write(add_contact(args, self.book))
-
-            case "change-contact":
-                if not args:
-                    self.log_widget.write(
-                        "[bold red]Please provide a name to edit. (e.g., 'change-contact Yura')[/bold red]"
-                    )
-                    return
-
-                name_to_edit = args[0]
-
-                found_record = None
-                name_to_edit_lower = name_to_edit.lower()
-
-                for record_name in self.book.data.keys():
-                    if record_name.lower() == name_to_edit_lower:
-                        found_record = self.book.data[record_name]
-                        break
-
-                if found_record:
-
-                    self.push_screen(
-                        AddContactScreen(self.book, record_to_edit=found_record),
-                        self.log_operation_result,
-                    )
-                else:
-                    self.log_widget.write(
-                        f"[bold red]Contact '{name_to_edit}' not found.[/bold red]"
-                    )
-
-            case "all":
-                if not self.book.data:
-                    self.log_widget.write("Contacts list is empty")
-                else:
-                    self.push_screen(AllContactsScreen(self.book))
-
-            case "birthdays":
-                self.push_screen(BirthdaysScreen(self.book))
-
-            case "clear":
-                self.log_widget.clear()
-
-            case "exit" | "close":
-                await self.action_quit()
-
-            case _:
-                self.log_widget.write(
-                    "[bold red]🦥 Uhh... I looked everywhere. No such command.[/bold red]"
-                )
+        #
+        #     case _:
+        #         self.log_widget.write(
+        #             "[bold red]🦥 Uhh... I looked everywhere. No such command.[/bold red]"
+        #         )
