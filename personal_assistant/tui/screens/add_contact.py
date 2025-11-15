@@ -1,6 +1,6 @@
 from textual.screen import ModalScreen
 from personal_assistant.models.address_book import AddressBook
-from personal_assistant.models.phone import Phone
+from personal_assistant.models.field import Phone
 from typing import Optional
 from personal_assistant.models.record import Record
 from textual.app import ComposeResult
@@ -35,8 +35,11 @@ class AddContactScreen(ModalScreen):
             yield Static("Name: [red]*[/red]")
             yield Input(id="name-input", placeholder="John Doe")
 
-            yield Static("Phone: [red]*[/red]")
-            yield Input(id="phone-input", placeholder="1234567890")
+            yield Static("Phone1: [red]*[/red]")
+            yield Input(id="phone1-input", placeholder="1234567890")
+
+            yield Static("Phone2:")
+            yield Input(id="phone2-input", placeholder="1234567890")
 
             yield Static("Birthday:")
             yield Input(id="birthday-input", placeholder="DD.MM.YYYY")
@@ -63,11 +66,11 @@ class AddContactScreen(ModalScreen):
             name_input.value = self.record_to_edit.name.value
             name_input.disabled = True
 
-            if self.record_to_edit.phones:
-
-                self.query_one("#phone-input", Input).value = (
-                    self.record_to_edit.phones[0].value
-                )
+            phones = self.record_to_edit.phones
+            if len(phones) > 0:
+                self.query_one("#phone1-input", Input).value = phones[0].value
+            if len(phones) > 1:
+                self.query_one("#phone2-input", Input).value = phones[1].value
 
             if self.record_to_edit.birthday:
                 self.query_one("#birthday-input", Input).value = (
@@ -84,7 +87,7 @@ class AddContactScreen(ModalScreen):
                     self.record_to_edit.address.value
                 )
 
-            self.query_one("#phone-input", Input).focus()
+            self.query_one("#phone1-input", Input).focus()
 
         else:
 
@@ -99,20 +102,42 @@ class AddContactScreen(ModalScreen):
         elif event.button.id == "submit-form":
             error_widget = self.query_one("#form-error", Static)
 
-            name = self.query_one("#name-input", Input).value
-            phone = self.query_one("#phone-input", Input).value
-            birthday_str = self.query_one("#birthday-input", Input).value
+            name = self.query_one("#name-input", Input).value.strip()
+            phone1 = self.query_one("#phone1-input", Input).value.strip()
+            phone2 = self.query_one("#phone2-input", Input).value.strip()
+            birthday_str = self.query_one("#birthday-input", Input).value.strip()
 
             try:
+                if not name:
+                    raise ValueError("Name is required.")
+                if not phone1:
+                    raise ValueError("Phone 1 is required.")
+
+                validated_phone1 = Phone(phone1)
+
                 if self.record_to_edit:
                     record = self.record_to_edit
                     message = "Contact updated."
-                    validated_phone = Phone(phone)
+                    # validated_phone = Phone(phone)
 
                     if record.phones:
-                        record.phones[0].value = validated_phone.value
+                        record.phones[0].value = validated_phone1.value
                     else:
-                        record.phones.append(validated_phone)
+                        record.phones.append(validated_phone1)
+
+                    if phone2:
+                        validated_phone2 = Phone(phone2)
+                        if len(record.phones) > 1:
+                            record.phones[1].value = validated_phone2.value
+                        else:
+                            record.phones.append(validated_phone2)
+                    elif len(record.phones) > 1:
+                        record.phones.pop(1)
+
+                    # if record.phones:
+                    #     record.phones[0].value = validated_phone.value
+                    # else:
+                    #     record.phones.append(validated_phone)
 
                     if birthday_str:
                         record.add_birthday(birthday_str)
@@ -129,7 +154,11 @@ class AddContactScreen(ModalScreen):
                         self.book.add_record(record)
                         message = "Contact added."
 
-                    record.add_phone(phone)
+                    record.add_phone(phone1)
+                    if phone2:
+                        record.add_phone(phone2)
+
+                    # record.add_phone(phone)
 
                     if birthday_str:
                         record.add_birthday(birthday_str)
