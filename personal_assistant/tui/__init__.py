@@ -1,0 +1,1 @@
+from personal_assistant.tui.app import AddressBookApp
