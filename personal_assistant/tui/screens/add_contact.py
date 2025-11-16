@@ -36,10 +36,10 @@ class AddContactScreen(ModalScreen):
             yield Input(id="name-input", placeholder="John Doe")
 
             yield Static("Phone1: [red]*[/red]")
-            yield Input(id="phone1-input", placeholder="1234567890")
+            yield Input(id="phone1-input", placeholder="0XXXXXXXXX")
 
             yield Static("Phone2:")
-            yield Input(id="phone2-input", placeholder="1234567890")
+            yield Input(id="phone2-input", placeholder="0XXXXXXXXX")
 
             yield Static("Birthday:")
             yield Input(id="birthday-input", placeholder="DD.MM.YYYY")
@@ -106,6 +106,8 @@ class AddContactScreen(ModalScreen):
             phone1 = self.query_one("#phone1-input", Input).value.strip()
             phone2 = self.query_one("#phone2-input", Input).value.strip()
             birthday_str = self.query_one("#birthday-input", Input).value.strip()
+            email = self.query_one("#email-input", Input).value.strip()
+            address = self.query_one("#address-input", Input).value.strip()
 
             try:
                 if not name:
@@ -118,7 +120,6 @@ class AddContactScreen(ModalScreen):
                 if self.record_to_edit:
                     record = self.record_to_edit
                     message = "Contact updated."
-                    # validated_phone = Phone(phone)
 
                     if record.phones:
                         record.phones[0].value = validated_phone1.value
@@ -134,18 +135,22 @@ class AddContactScreen(ModalScreen):
                     elif len(record.phones) > 1:
                         record.phones.pop(1)
 
-                    # if record.phones:
-                    #     record.phones[0].value = validated_phone.value
-                    # else:
-                    #     record.phones.append(validated_phone)
-
                     if birthday_str:
                         record.add_birthday(birthday_str)
                     else:
                         record.birthday = None
 
-                else:
+                    if email:
+                        record.add_email(email)
+                    else:
+                        record.email = None
 
+                    if address:
+                        record.add_address(address)
+                    else:
+                        record.address = None
+
+                else:
                     record = self.book.find(name)
                     message = "Contact updated."
 
@@ -158,10 +163,13 @@ class AddContactScreen(ModalScreen):
                     if phone2:
                         record.add_phone(phone2)
 
-                    # record.add_phone(phone)
-
                     if birthday_str:
                         record.add_birthday(birthday_str)
+
+                    if email:
+                        record.add_email(email)
+                    if address:
+                        record.add_address(address)
 
                 self.dismiss((True, f"{message} (Name: {record.name.value})"))
 

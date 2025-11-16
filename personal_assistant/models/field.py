@@ -9,7 +9,7 @@ from personal_assistant.models.exceptions import (
     InvalidTagFormatError,
 )
 
-__all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag"]
+__all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag", "Address"]
 
 
 class Field:
@@ -110,6 +110,29 @@ class Email(Field):
         if not re.fullmatch(self.EMAIL_PATTERN, value):
             raise InvalidEmailFormatError(value)
         super().__init__(value)
+
+
+class Address(Field):
+    """
+    Stores a postal address.
+    Minimal validation:
+        - at least 5 visible chars
+        - no forbidden symbols
+        - trims extra spaces
+    """
+
+    FORBIDDEN = r'[%<&>"\']'
+
+    def __init__(self, value: str):
+        cleaned = value.strip()
+
+        if len(cleaned) < 5:
+            raise InvalidTagFormatError(f"Invalid address (too short): {value}")
+
+        if re.search(self.FORBIDDEN, cleaned):
+            raise InvalidTagFormatError(f"Address contains forbidden symbols: {value}")
+
+        super().__init__(cleaned)
 
 
 class Title(Field):

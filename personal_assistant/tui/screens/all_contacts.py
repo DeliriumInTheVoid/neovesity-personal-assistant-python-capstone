@@ -32,7 +32,7 @@ class AllContactsScreen(Screen):
         """Called when the screen is mounted. Populate the table."""
         table = self.query_one(DataTable)
 
-        table.add_columns("№", "Name", "Phones", "Birthday")
+        table.add_columns("№", "Name", "Phones", "Birthday", "Email", "Address")
 
         if not self.book.data:
             table.add_row("[italic]No contacts found.[/italic]")
@@ -48,5 +48,16 @@ class AllContactsScreen(Screen):
                 if record.birthday
                 else "[italic]No birthday[/italic]"
             )
+            email = (
+                record.email.value
+                if record.email and record.email.value
+                else "[italic]No email[/italic]"
+            )
 
-            table.add_row(str(i), record.name.value, phones, birthday)
+            address = (
+                record.address.value
+                if record.address and record.address.value
+                else "[italic]No address[/italic]"
+            )
+
+            table.add_row(str(i), record.name.value, phones, birthday, email, address)
