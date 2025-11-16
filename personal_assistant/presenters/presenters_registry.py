@@ -8,7 +8,6 @@ from personal_assistant.presenters import (
     ChangeContactPresenter,
     ShowPhonePresenter,
     ShowAllContactsPresenter,
-    AddBirthdayPresenter,
     ShowBirthdayPresenter,
     ShowUpcomingBirthdaysPresenter,
     SearchContactsPresenter,
@@ -16,6 +15,7 @@ from personal_assistant.presenters import (
     SearchNotesPresenter,
     ShowAllNotesPresenter,
     ShowHelpPresenter,
+    GenerateDataPresenter,
 )
 
 
@@ -41,6 +41,7 @@ class PresentersRegistry:
         self.commands['add-note'] = AddNotePresenter(notes_storage)                         #
         self.commands['search-notes'] = SearchNotesPresenter(notes_storage)                 #
         self.commands['all-notes'] = ShowAllNotesPresenter(notes_storage)                   #
+        self.commands['generate-data'] = GenerateDataPresenter(address_book_storage, notes_storage) #
 
         self.commands['help'] = ShowHelpPresenter(self.commands)
 

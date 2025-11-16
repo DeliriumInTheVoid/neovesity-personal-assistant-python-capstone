@@ -36,6 +36,7 @@ class AddressBookApp(App):
         "show-birthday",
         "birthdays",
         "search",
+        "generate-data",
         "clear",
         "exit",
         "close",

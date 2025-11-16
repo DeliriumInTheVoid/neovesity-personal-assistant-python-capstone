@@ -80,12 +80,12 @@ class AddContactScreen(ModalScreen):
 
             if self.existing_contact.email:
                 self.query_one("#email-input", Input).value = (
-                    self.existing_contact.email
+                    self.existing_contact.email.value
                 )
 
             if self.existing_contact.address:
                 self.query_one("#address-input", Input).value = (
-                    self.existing_contact.address
+                    self.existing_contact.address.value
                 )
 
             self.query_one("#phone1-input", Input).focus()

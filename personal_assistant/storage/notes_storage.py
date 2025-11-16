@@ -10,6 +10,7 @@ from personal_assistant.models.note import Note
 from personal_assistant.storage.base_storage import BaseStorage
 from personal_assistant.storage.constants import (
     INDEX_NOTE_TITLE,
+    INDEX_NOTE_TAG,
     INDEX_NOTE_CREATION_DATE,
     NOTE_INDEXES,
 )
@@ -40,6 +41,11 @@ class NotesStorage(BaseStorage):
         if note_data.get('created_at'):
             self.index_manager.add_to_date_index(INDEX_NOTE_CREATION_DATE, note_data['created_at'], note_uuid)
 
+        tags = note_data.get('tags', [])
+        for tag in tags:
+            self.index_manager.add_to_trie_index(INDEX_NOTE_TAG, tag, note_uuid)
+
+
     def _remove_from_indexes(self, note_uuid: str, note_data: Dict[str, Any]):
         """Remove note from all indexes."""
         if note_data.get('title'):
@@ -47,6 +53,10 @@ class NotesStorage(BaseStorage):
 
         if note_data.get('created_at'):
             self.index_manager.remove_from_date_index(INDEX_NOTE_CREATION_DATE, note_data['created_at'], note_uuid)
+
+        tags = note_data.get('tags', [])
+        for tag in tags:
+            self.index_manager.remove_from_trie_index(INDEX_NOTE_TAG, tag, note_uuid)
 
     # ============================================================
     # CRUD operations with indexing
