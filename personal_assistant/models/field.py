@@ -9,7 +9,7 @@ from personal_assistant.models.exceptions import (
     InvalidTagFormatError,
 )
 
-__all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag"]
+__all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag", "Address"]
 
 
 class Field:
@@ -42,19 +42,31 @@ class Birthday(Field):
 class Phone(Field):
 
     def __init__(self, value):
-        normalized = self.normalize_ua_phone(value)
-        if normalized is None:
-            raise InvalidPhoneFormatError(f"Invalid phone number: {value}")
-        super().__init__(normalized)
-        
-    @staticmethod                       
+        # normalized = self.normalize_ua_phone(value)
+        # if normalized is None:
+        #     raise InvalidPhoneFormatError(f"Invalid phone number: {value}")
+        super().__init__(value)
+
+    @staticmethod
     def normalize_ua_phone(phone: str) -> str | None:
         digits = re.sub(r"\D", "", phone)
 
         UA_CODES = {
-            "039", "050", "063", "066", "067", "068",
-            "091", "092", "093", "094",
-            "095", "096", "097", "098", "099"
+            "039",
+            "050",
+            "063",
+            "066",
+            "067",
+            "068",
+            "091",
+            "092",
+            "093",
+            "094",
+            "095",
+            "096",
+            "097",
+            "098",
+            "099",
         }
 
         # Case 1: 380XXXXXXXXX
@@ -86,10 +98,10 @@ class Phone(Field):
             return None
 
         return None
-    
+
     def __str__(self):
         return str(self.value)
-    
+
 
 class Email(Field):
     EMAIL_PATTERN = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
@@ -98,6 +110,29 @@ class Email(Field):
         if not re.fullmatch(self.EMAIL_PATTERN, value):
             raise InvalidEmailFormatError(value)
         super().__init__(value)
+
+
+class Address(Field):
+    """
+    Stores a postal address.
+    Minimal validation:
+        - at least 5 visible chars
+        - no forbidden symbols
+        - trims extra spaces
+    """
+
+    FORBIDDEN = r'[%<&>"\']'
+
+    def __init__(self, value: str):
+        cleaned = value.strip()
+
+        if len(cleaned) < 5:
+            raise InvalidTagFormatError(f"Invalid address (too short): {value}")
+
+        if re.search(self.FORBIDDEN, cleaned):
+            raise InvalidTagFormatError(f"Address contains forbidden symbols: {value}")
+
+        super().__init__(cleaned)
 
 
 class Title(Field):
@@ -111,9 +146,11 @@ class Tag(Field):
     def __init__(self, value):
         if not value or len(value.strip()) <= 3:
             raise InvalidTagFormatError(value)
-        
+
         # Check for % and special symbols (allow alphanumeric, spaces, hyphens, underscores)
-        if re.search(r'[%&<>"\'/\\]', value) or not re.match(r'^[a-zA-Z0-9\s\-_]+$', value.strip()):
+        if re.search(r'[%&<>"\'/\\]', value) or not re.match(
+            r"^[a-zA-Z0-9\s\-_]+$", value.strip()
+        ):
             raise InvalidTagFormatError(value)
-        
+
         super().__init__(value.strip())

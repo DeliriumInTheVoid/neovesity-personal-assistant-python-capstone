@@ -31,8 +31,11 @@ class AddContactScreen(ModalScreen):
             yield Static("Name: [red]*[/red]")
             yield Input(id="name-input", placeholder="John Doe")
 
-            yield Static("Phone: [red]*[/red]")
-            yield Input(id="phone-input", placeholder="1234567890")
+            yield Static("Phone1: [red]*[/red]")
+            yield Input(id="phone1-input", placeholder="0XXXXXXXXX")
+
+            yield Static("Phone2:")
+            yield Input(id="phone2-input", placeholder="0XXXXXXXXX")
 
             yield Static("Birthday:")
             yield Input(id="birthday-input", placeholder="DD.MM.YYYY")
@@ -54,27 +57,39 @@ class AddContactScreen(ModalScreen):
             self.query_one(".title", Static).update("Edit Contact")
 
             first_name = self.existing_contact.first_name.value
-            last_name = self.existing_contact.last_name.value if self.existing_contact.last_name else ""
+            last_name = (
+                self.existing_contact.last_name.value
+                if self.existing_contact.last_name
+                else ""
+            )
             name = f"{first_name} {last_name}".strip()
 
             name_input = self.query_one("#name-input", Input)
             name_input.value = name
 
-            if self.existing_contact.phones:
-                self.query_one("#phone-input", Input).value = self.existing_contact.phones[0].value
+            phones = self.existing_contact.phones
+            if len(phones) > 0:
+                self.query_one("#phone1-input", Input).value = phones[0].value
+            if len(phones) > 1:
+                self.query_one("#phone2-input", Input).value = phones[1].value
 
             if self.existing_contact.birthday:
-                self.query_one("#birthday-input", Input).value = self.existing_contact.birthday.value.strftime("%d.%m.%Y")
+                self.query_one("#birthday-input", Input).value = (
+                    self.existing_contact.birthday.value.strftime("%d.%m.%Y")
+                )
 
-            # if self.existing_contact.emails:
-            #     self.query_one("#email-input", Input).value = self.existing_contact.emails[0].value
             if self.existing_contact.email:
-                self.query_one("#email-input", Input).value = self.existing_contact.email
+                self.query_one("#email-input", Input).value = (
+                    self.existing_contact.email
+                )
 
             if self.existing_contact.address:
-                self.query_one("#address-input", Input).value = self.existing_contact.address
+                self.query_one("#address-input", Input).value = (
+                    self.existing_contact.address
+                )
 
-            self.query_one("#phone-input", Input).focus()
+            self.query_one("#phone1-input", Input).focus()
+
         else:
 
             self.query_one("#name-input", Input).focus()
@@ -87,7 +102,8 @@ class AddContactScreen(ModalScreen):
             error_widget = self.query_one("#form-error", Static)
 
             name = self.query_one("#name-input", Input).value.strip()
-            phone = self.query_one("#phone-input", Input).value.strip()
+            phone1 = self.query_one("#phone1-input", Input).value.strip()
+            phone2 = self.query_one("#phone2-input", Input).value.strip()
             birthday_str = self.query_one("#birthday-input", Input).value.strip()
             email = self.query_one("#email-input", Input).value.strip()
             address = self.query_one("#address-input", Input).value.strip()
@@ -97,7 +113,7 @@ class AddContactScreen(ModalScreen):
                 error_widget.display = True
                 return
 
-            if not phone:
+            if not phone1:
                 error_widget.update("[red]Error:[/red] Phone is required")
                 error_widget.display = True
                 return
@@ -110,15 +126,14 @@ class AddContactScreen(ModalScreen):
                 contact_data = {
                     "first_name": first_name,
                     "last_name": last_name,
-                    "phones": [phone],
-                    # "emails": [email] if email else [],
+                    "phones": [phone1, phone2],
                     "email": email if email else None,
                     "address": address if address else None,
                     "birthday": birthday_str if birthday_str else None,
                 }
 
                 if self.existing_contact:
-                    contact_data["id"] = self.existing_contact.uuid
+                    contact_data["uuid"] = self.existing_contact.uuid
                     message = f"Contact '{name}' updated"
                 else:
                     message = f"Contact '{name}' added"
