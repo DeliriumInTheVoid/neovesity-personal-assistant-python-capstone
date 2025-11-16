@@ -1,6 +1,6 @@
 from datetime import datetime
 from textual.app import ComposeResult
-from textual.screen import Screen
+from textual.screen import ModalScreen
 from textual.containers import Container, Vertical, Horizontal
 from textual.widgets import (
     Header,
@@ -14,19 +14,9 @@ from textual.widgets import (
 from textual.message import Message
 
 from personal_assistant.models.note import Note
-from personal_assistant.models.notes_book import NotesBook
-from personal_assistant.models.exceptions import (
-    InvalidTitleFormatError,
-    InvalidTagFormatError,
-    TagAlreadyExistsError,
-    ContactBotError,
-)
 
 
-class NoteFormScreen(Screen):
-    """
-    Modal screen for adding/updating notes.
-    """
+class NoteFormScreen(ModalScreen):
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -34,15 +24,13 @@ class NoteFormScreen(Screen):
     ]
 
     class NoteSaved(Message):
-        """Message sent when a note is successfully saved."""
         def __init__(self, note: Note, is_update: bool):
             super().__init__()
             self.note = note
             self.is_update = is_update
 
-    def __init__(self, notes_book: NotesBook, existing_note: Note | None = None, **kwargs):
+    def __init__(self, existing_note: Note | None = None, **kwargs):
         super().__init__(**kwargs)
-        self.notes_book = notes_book
         self.existing_note = existing_note
         self.is_update = existing_note is not None
 
@@ -60,7 +48,7 @@ class NoteFormScreen(Screen):
 
                 yield Label("Creation Date:", classes="field-label")
                 creation_date_str = (
-                    self.existing_note.creation_date.strftime("%d.%m.%Y %H:%M:%S")
+                    self.existing_note.created_at.value.strftime("%d.%m.%Y %H:%M:%S")
                     if self.existing_note
                     else datetime.now().strftime("%d.%m.%Y %H:%M:%S")
                 )
@@ -73,13 +61,13 @@ class NoteFormScreen(Screen):
                 yield Label("Description:", classes="field-label")
                 yield TextArea(
                     id="description-input",
-                    text=self.existing_note.description if self.existing_note else "",
+                    text=self.existing_note.content.value if self.existing_note else "",
                 )
 
                 yield Label("Tags (comma-separated, each > 3 symbols, no % & special symbols):", classes="field-label")
                 tags_value = (
-                    ", ".join(t.value for t in self.existing_note.tags)
-                    if self.existing_note and self.existing_note.tags
+                    ", ".join(tag.value for tag in self.existing_note.tags)
+                    if self.existing_note
                     else ""
                 )
                 yield Input(
@@ -113,70 +101,46 @@ class NoteFormScreen(Screen):
         error_widget.update("")
 
         try:
-            # Get form values
             title_input = self.query_one("#title-input", Input)
             description_input = self.query_one("#description-input", TextArea)
             tags_input = self.query_one("#tags-input", Input)
 
             title = title_input.value.strip()
-            # TextArea uses .text property to get the content
             description = description_input.text.strip()
             tags_str = tags_input.value.strip()
 
-            # Validate title
             if not title or len(title) <= 5:
                 error_widget.update("[bold red]Error: Title must be more than 5 symbols.[/bold red]")
                 title_input.focus()
                 return
 
-            # Create or update note
-            if self.is_update and self.existing_note:
-                # Update existing note
-                note = self.existing_note
-                # If title changed, we need to handle it specially
-                if title != note.title.value:
-                    # Remove old note and create new one with new title
-                    del self.notes_book[note.title.value]
-                    note = Note(title, description)
-                    note.creation_date = self.existing_note.creation_date  # Preserve creation date
-                else:
-                    note.update_title(title)
-                    note.update_description(description)
-                    note.tags.clear()  # Clear existing tags
-            else:
-                # Create new note
-                note = Note(title, description)
-
-            # Add tags
+            tags_list = []
             if tags_str:
-                tag_list = [tag.strip() for tag in tags_str.split(",") if tag.strip()]
-                for tag in tag_list:
-                    try:
-                        note.add_tag(tag)
-                    except InvalidTagFormatError as e:
-                        error_widget.update(f"[bold red]Error: {e}[/bold red]")
+                tags_list = [tag.strip() for tag in tags_str.split(",") if tag.strip()]
+                for tag in tags_list:
+                    if len(tag) <= 3:
+                        error_widget.update(f"[bold red]Error: Tag '{tag}' must be more than 3 symbols.[/bold red]")
                         tags_input.focus()
                         return
-                    except TagAlreadyExistsError:
-                        # Skip duplicate tags
-                        pass
+                    if any(char in tag for char in '%&'):
+                        error_widget.update(f"[bold red]Error: Tag '{tag}' contains invalid characters.[/bold red]")
+                        tags_input.focus()
+                        return
 
-            # Add note to book
-            self.notes_book.add_note(note)
+            note_data = {
+                "title": title,
+                "content": description,
+                "tags": tags_list,
+            }
 
-            # Send message and close
-            self.post_message(self.NoteSaved(note, self.is_update))
-            self.app.pop_screen()
+            if self.is_update and self.existing_note:
+                note_data["id"] = self.existing_note.uuid
+                note_data["created_at"] = self.existing_note.created_at.value.isoformat()
 
-        except InvalidTitleFormatError as e:
-            error_widget.update(f"[bold red]Error: {e}[/bold red]")
-            self.query_one("#title-input").focus()
-        except ContactBotError as e:
-            error_widget.update(f"[bold red]Error: {e}[/bold red]")
+            self.dismiss((True, f"Note '{title}' saved", note_data))
+
         except Exception as e:
             error_widget.update(f"[bold red]Unexpected error: {e}[/bold red]")
 
     def action_cancel(self) -> None:
-        """Cancel and close the form."""
-        self.app.pop_screen()
-
+        self.dismiss((False, "Operation cancelled", None))

@@ -2,13 +2,8 @@ from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, DataTable, Footer
 
-from personal_assistant.models import AddressBook
-
 
 class BirthdaysScreen(Screen):
-    """
-    Modal screen to display upcoming birthdays.
-    """
 
     BINDINGS = [
         (
@@ -18,9 +13,13 @@ class BirthdaysScreen(Screen):
         ),
     ]
 
-    def __init__(self, book: AddressBook, **kwargs):
+    def __init__(self, upcoming_birthdays: list[tuple[str, str, int]], **kwargs):
+        """
+        Args:
+            upcoming_birthdays: List of tuples (name, birthday_str, days_until)
+        """
         super().__init__(**kwargs)
-        self.book = book
+        self.upcoming_birthdays = upcoming_birthdays
 
     def compose(self) -> ComposeResult:
         yield Header(name="🎂 Upcoming Birthdays")
@@ -28,16 +27,14 @@ class BirthdaysScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        """Called when the screen is mounted. Populate the table."""
         table = self.query_one(DataTable)
 
-        table.add_columns("№", "Name", "Congratulation date")
+        table.add_columns("№", "Name", "Birthday", "Days Until")
 
-        upcoming = self.book.get_upcoming_birthdays()
-
-        if not upcoming:
-            table.add_row("[italic]No upcoming birthdays found.[/italic]")
+        if not self.upcoming_birthdays:
+            table.add_row("[italic]No upcoming birthdays in the next 7 days.[/italic]")
             return
 
-        for i, (record, date_) in enumerate(upcoming, start=1):
-            table.add_row(str(i), record.name.value, str(date_))
+        for i, (name, birthday_str, days_until) in enumerate(self.upcoming_birthdays, start=1):
+            day_str = "Today!" if days_until == 0 else f"{days_until} day(s)"
+            table.add_row(str(i), name, birthday_str, day_str)

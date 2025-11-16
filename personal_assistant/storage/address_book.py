@@ -5,7 +5,8 @@ Combines HeapStorage (file storage) and IndexManager (indexes for search).
 Ensures consistency between data and indexes.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Optional, List, Dict, Any
+from personal_assistant.models.record import Record
 from personal_assistant.storage.base_storage import BaseStorage
 from personal_assistant.storage.constants import (
     INDEX_CONTACT_FIRST_NAME,
@@ -40,131 +41,85 @@ class AddressBookStorage(BaseStorage):
     # CRUD operations
     # ============================================================
 
-    def add_contact(self, first_name: str, last_name: str = "",
-                    phones: List[str] = None, emails: List[str] = None,
-                    note_ids: List[str] = None, **extra_fields) -> str:
+    def add_record(self, record: Record) -> str:
         """
         Add a new contact.
 
         Args:
-            first_name: First name (required)
-            last_name: Last name
-            phones: List of phone numbers
-            emails: List of email addresses
-            note_ids: List of note UUIDs
-            **extra_fields: Additional fields (birthday, address, etc.)
+            record: contact record
 
         Returns:
             UUID of created contact
         """
-        if phones is None:
-            phones = []
-        if emails is None:
-            emails = []
-        if note_ids is None:
-            note_ids = []
 
-        contact_data = {
-            'first_name': first_name,
-            'last_name': last_name,
-            'phones': phones,
-            'emails': emails,
-            'note_ids': note_ids,
-            **extra_fields
-        }
+        new_record = self.heap.create_contact(record.to_dict())
+        self._add_to_indexes(new_record.get("uuid"), new_record)
 
-        created_contact = self.heap.create_contact(contact_data)
-        contact_uuid = created_contact['uuid']
+        return record.uuid
 
-        self._add_to_indexes(contact_uuid, created_contact)
-
-        return contact_uuid
-
-    def get_contact(self, contact_uuid: str) -> Optional[Dict[str, Any]]:
+    def get_record_by_id(self, contact_uuid: str) -> Optional[Record]:
         """
         Get contact by UUID.
 
         Returns:
-            Dict with contact data or None
+            Record or None
         """
         return self.heap.read_contact(contact_uuid)
 
-    def update_contact(self, contact_uuid: str, first_name: str = None,
-                       last_name: str = None, phones: List[str] = None,
-                       emails: List[str] = None, note_ids: List[str] = None,
-                       **extra_fields) -> bool:
+    def update_record(self, record: Record) -> bool:
         """
         Update contact.
 
         Args:
-            contact_uuid: Contact UUID
-            first_name: New first name (None = don't change)
-            last_name: New last name (None = don't change)
-            phones: New list of phones (None = don't change)
-            emails: New list of emails (None = don't change)
-            note_ids: New list of notes (None = don't change)
-            **extra_fields: Additional fields
+            record: contact record
 
         Returns:
             True if successful, False if contact not found
         """
 
-        old_contact = self.heap.read_contact(contact_uuid)
+        old_contact = self.heap.read_contact(record.uuid)
         if not old_contact:
             return False
 
-        self._remove_from_indexes(contact_uuid, old_contact)
+        self._remove_from_indexes(record.uuid, old_contact)
 
-        new_contact = old_contact.copy()
-        if first_name is not None:
-            new_contact['first_name'] = first_name
-        if last_name is not None:
-            new_contact['last_name'] = last_name
-        if phones is not None:
-            new_contact['phones'] = phones
-        if emails is not None:
-            new_contact['emails'] = emails
-        if note_ids is not None:
-            new_contact['note_ids'] = note_ids
+        raw_record = record.to_dict()
+        if self.heap.update_contact(record.uuid, raw_record):
+            self._add_to_indexes(record.uuid, raw_record)
+            return True
 
-        new_contact.update(extra_fields)
 
-        success = self.heap.update_contact(contact_uuid, new_contact)
+        return False
 
-        if success:
-            self._add_to_indexes(contact_uuid, new_contact)
-
-        return success
-
-    def remove_contact(self, contact_uuid: str) -> bool:
+    def delete_record(self, contact_uuid: str) -> bool:
         """
         Delete contact.
 
         Returns:
             True if successful, False if contact not found
         """
-        contact = self.heap.read_contact(contact_uuid)
-        if not contact:
+        record = self.heap.read_contact(contact_uuid)
+        if not record:
             return False
 
-        self._remove_from_indexes(contact_uuid, contact)
+        self._remove_from_indexes(contact_uuid, record)
 
         return self.heap.delete_contact(contact_uuid)
 
-    def list_contacts(self) -> List[Dict[str, Any]]:
+    def get_all_records(self) -> List[Record]:
         """
         Get all contacts.
 
-        Returns:
+        Returns:a;;
             List of all contacts
         """
-        return self.heap.list_all_contacts()
+        return list(map(lambda record_data: Record.from_dict(record_data),  self.heap.list_all_contacts()))
 
     # ============================================================
     # Search
     # ============================================================
 
-    def search_by_first_name(self, prefix: str) -> List[Dict[str, Any]]:
+    def search_by_first_name(self, prefix: str) -> List[Record]:
         """
         Search contacts by first name prefix.
 
@@ -181,11 +136,11 @@ class AddressBookStorage(BaseStorage):
             for uuid in uuids:
                 contact = self.heap.read_contact(uuid)
                 if contact:
-                    contacts.append(contact)
+                    contacts.append(Record.from_dict(contact))
 
         return contacts
 
-    def search_by_last_name(self, prefix: str) -> List[Dict[str, Any]]:
+    def search_by_last_name(self, prefix: str) -> List[Record]:
         """
         Search contacts by last name prefix.
 
@@ -206,7 +161,7 @@ class AddressBookStorage(BaseStorage):
 
         return contacts
 
-    def search_by_phone(self, phone: str) -> List[Dict[str, Any]]:
+    def search_by_phone(self, phone: str) -> List[Record]:
         """
         Exact search for contacts by phone.
 
@@ -226,7 +181,7 @@ class AddressBookStorage(BaseStorage):
 
         return contacts
 
-    def search_by_email(self, email: str) -> List[Dict[str, Any]]:
+    def search_by_email(self, email: str) -> List[Record]:
         """
         Exact search for contacts by email.
 
@@ -262,8 +217,11 @@ class AddressBookStorage(BaseStorage):
         for phone in contact_data.get('phones', []):
             self.index_manager.add_to_hash_index(INDEX_CONTACT_PHONE, phone, contact_uuid)
 
-        for email in contact_data.get('emails', []):
-            self.index_manager.add_to_hash_index(INDEX_CONTACT_EMAIL, email, contact_uuid)
+        # for email in contact_data.get('emails', []):
+        #     self.index_manager.add_to_hash_index(INDEX_CONTACT_EMAIL, email, contact_uuid)
+        if contact_data.get('email'):
+            self.index_manager.add_to_hash_index(INDEX_CONTACT_EMAIL, contact_data['email'], contact_uuid)
+
 
     def _remove_from_indexes(self, contact_uuid: str, contact_data: Dict[str, Any]):
         """Remove contact from all indexes."""
@@ -276,5 +234,7 @@ class AddressBookStorage(BaseStorage):
         for phone in contact_data.get('phones', []):
             self.index_manager.remove_from_hash_index(INDEX_CONTACT_PHONE, phone, contact_uuid)
 
-        for email in contact_data.get('emails', []):
-            self.index_manager.remove_from_hash_index(INDEX_CONTACT_EMAIL, email, contact_uuid)
+        if contact_data.get('email'):
+            self.index_manager.remove_from_hash_index(INDEX_CONTACT_EMAIL, contact_data['email'], contact_uuid)
+        # for email in contact_data.get('emails', []):
+        #     self.index_manager.remove_from_hash_index(INDEX_CONTACT_EMAIL, email, contact_uuid)

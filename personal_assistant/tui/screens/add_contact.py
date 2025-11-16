@@ -1,8 +1,5 @@
 from textual.screen import ModalScreen
-from personal_assistant.models.address_book import AddressBook
-from personal_assistant.models.phone import Phone
 from typing import Optional
-from personal_assistant.models.record import Record
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.widgets import (
@@ -11,19 +8,18 @@ from textual.widgets import (
     Button,
 )
 
+from personal_assistant.models.record import Record
+
 
 class AddContactScreen(ModalScreen):
-    """Screen with a form to add or edit a contact."""
 
     def __init__(
         self,
-        book: AddressBook,
-        record_to_edit: Optional[Record] = None,
+        existing_contact: Optional[Record] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.book = book
-        self.record_to_edit = record_to_edit
+        self.existing_contact = existing_contact
 
     def compose(self) -> ComposeResult:
         with Vertical(id="add-contact-form"):
@@ -52,89 +48,82 @@ class AddContactScreen(ModalScreen):
                 yield Button("Cancel", id="cancel-form", variant="error")
 
     def on_mount(self) -> None:
-        """Focus the first input field and populate form if in edit mode."""
         self.query_one("#form-error", Static).display = False
 
-        if self.record_to_edit:
-
+        if self.existing_contact:
             self.query_one(".title", Static).update("Edit Contact")
 
+            first_name = self.existing_contact.first_name.value
+            last_name = self.existing_contact.last_name.value if self.existing_contact.last_name else ""
+            name = f"{first_name} {last_name}".strip()
+
             name_input = self.query_one("#name-input", Input)
-            name_input.value = self.record_to_edit.name.value
-            name_input.disabled = True
+            name_input.value = name
 
-            if self.record_to_edit.phones:
+            if self.existing_contact.phones:
+                self.query_one("#phone-input", Input).value = self.existing_contact.phones[0].value
 
-                self.query_one("#phone-input", Input).value = (
-                    self.record_to_edit.phones[0].value
-                )
+            if self.existing_contact.birthday:
+                self.query_one("#birthday-input", Input).value = self.existing_contact.birthday.value.strftime("%d.%m.%Y")
 
-            if self.record_to_edit.birthday:
-                self.query_one("#birthday-input", Input).value = (
-                    self.record_to_edit.birthday.value.strftime("%d.%m.%Y")
-                )
+            # if self.existing_contact.emails:
+            #     self.query_one("#email-input", Input).value = self.existing_contact.emails[0].value
+            if self.existing_contact.email:
+                self.query_one("#email-input", Input).value = self.existing_contact.email
 
-            if self.record_to_edit.email and self.record_to_edit.email.value:
-                self.query_one("#email-input", Input).value = (
-                    self.record_to_edit.email.value
-                )
-
-            if self.record_to_edit.address and self.record_to_edit.address.value:
-                self.query_one("#address-input", Input).value = (
-                    self.record_to_edit.address.value
-                )
+            if self.existing_contact.address:
+                self.query_one("#address-input", Input).value = self.existing_contact.address
 
             self.query_one("#phone-input", Input).focus()
-
         else:
 
             self.query_one("#name-input", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle submit or cancel button presses."""
         if event.button.id == "cancel-form":
-
-            self.dismiss((False, "Add/Edit contact cancelled."))
+            self.dismiss((False, "Operation cancelled", None))
 
         elif event.button.id == "submit-form":
             error_widget = self.query_one("#form-error", Static)
 
-            name = self.query_one("#name-input", Input).value
-            phone = self.query_one("#phone-input", Input).value
-            birthday_str = self.query_one("#birthday-input", Input).value
+            name = self.query_one("#name-input", Input).value.strip()
+            phone = self.query_one("#phone-input", Input).value.strip()
+            birthday_str = self.query_one("#birthday-input", Input).value.strip()
+            email = self.query_one("#email-input", Input).value.strip()
+            address = self.query_one("#address-input", Input).value.strip()
+
+            if not name:
+                error_widget.update("[red]Error:[/red] Name is required")
+                error_widget.display = True
+                return
+
+            if not phone:
+                error_widget.update("[red]Error:[/red] Phone is required")
+                error_widget.display = True
+                return
 
             try:
-                if self.record_to_edit:
-                    record = self.record_to_edit
-                    message = "Contact updated."
-                    validated_phone = Phone(phone)
+                name_parts = name.split(maxsplit=1)
+                first_name = name_parts[0]
+                last_name = name_parts[1] if len(name_parts) > 1 else ""
 
-                    if record.phones:
-                        record.phones[0].value = validated_phone.value
-                    else:
-                        record.phones.append(validated_phone)
+                contact_data = {
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "phones": [phone],
+                    # "emails": [email] if email else [],
+                    "email": email if email else None,
+                    "address": address if address else None,
+                    "birthday": birthday_str if birthday_str else None,
+                }
 
-                    if birthday_str:
-                        record.add_birthday(birthday_str)
-                    else:
-                        record.birthday = None
-
+                if self.existing_contact:
+                    contact_data["id"] = self.existing_contact.uuid
+                    message = f"Contact '{name}' updated"
                 else:
+                    message = f"Contact '{name}' added"
 
-                    record = self.book.find(name)
-                    message = "Contact updated."
-
-                    if record is None:
-                        record = Record(name)
-                        self.book.add_record(record)
-                        message = "Contact added."
-
-                    record.add_phone(phone)
-
-                    if birthday_str:
-                        record.add_birthday(birthday_str)
-
-                self.dismiss((True, f"{message} (Name: {record.name.value})"))
+                self.dismiss((True, message, contact_data))
 
             except Exception as e:
                 error_widget.update(f"[red]Error:[/red] {str(e)}")
