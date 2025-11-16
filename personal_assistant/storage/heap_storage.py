@@ -204,7 +204,7 @@ class HeapStorage:
 
         for file_path in entity_dir.glob("*.json"):
             # ignore macOS hidden files and temp files
-            if file_path.name.startswith('.'):
+            if file_path.name.startswith('._'):
                 continue
 
             entity = self._load(file_path)

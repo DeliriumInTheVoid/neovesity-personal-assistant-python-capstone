@@ -42,10 +42,10 @@ class Birthday(Field):
 class Phone(Field):
 
     def __init__(self, value):
-        normalized = self.normalize_ua_phone(value)
-        if normalized is None:
-            raise InvalidPhoneFormatError(f"Invalid phone number: {value}")
-        super().__init__(normalized)
+        # normalized = self.normalize_ua_phone(value)
+        # if normalized is None:
+        #     raise InvalidPhoneFormatError(f"Invalid phone number: {value}")
+        super().__init__(value)
 
     @staticmethod
     def normalize_ua_phone(phone: str) -> str | None:
@@ -71,28 +71,28 @@ class Phone(Field):
 
         # Case 1: 380XXXXXXXXX
         if digits.startswith("380") and len(digits) == 12:
-            code = digits[2:5]
+            code = digits[3:6]
             if code in UA_CODES:
                 return f"+{digits}"
             return None
 
         # Case 2: 0XXXXXXXXX
         if digits.startswith("0") and len(digits) == 10:
-            code = digits[0:3]
+            code = digits[1:4]
             if code in UA_CODES:
                 return "+38" + digits
             return None
 
         # Case 3: 80XXXXXXXXX
         if digits.startswith("80") and len(digits) == 11:
-            code = digits[1:4]
+            code = digits[2:5]
             if code in UA_CODES:
                 return "+3" + digits
             return None
 
         # Case 4: 9 digits only
         if len(digits) == 9:
-            code = "0" + digits[0:2]
+            code = digits[0:3]
             if code in UA_CODES:
                 return "+380" + digits
             return None

@@ -5,6 +5,7 @@ from personal_assistant.models.field import (
     Phone,
     Title,
     Tag,
+    Email,
     Address,
 )
 from personal_assistant.models.record import Record

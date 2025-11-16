@@ -1,14 +1,10 @@
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import DataTable, Footer, Header
-
-from personal_assistant.models import AddressBook
+from personal_assistant.models.record import Record
 
 
 class AllContactsScreen(Screen):
-    """
-    Modal screen to display all contacts in a table.
-    """
 
     BINDINGS = [
         (
@@ -18,9 +14,9 @@ class AllContactsScreen(Screen):
         ),
     ]
 
-    def __init__(self, book: AddressBook, **kwargs):
+    def __init__(self, contacts: list[Record], **kwargs):
         super().__init__(**kwargs)
-        self.book = book
+        self.contacts = contacts
 
     def compose(self) -> ComposeResult:
         yield Header(name="All Contacts")
@@ -29,16 +25,19 @@ class AllContactsScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        """Called when the screen is mounted. Populate the table."""
         table = self.query_one(DataTable)
 
         table.add_columns("№", "Name", "Phones", "Birthday", "Email", "Address")
 
-        if not self.book.data:
+        contacts = self.contacts
+
+        if not contacts:
             table.add_row("[italic]No contacts found.[/italic]")
             return
 
-        for i, record in enumerate(self.book.data.values(), start=1):
+        for i, record in enumerate(contacts, start=1):
+            name = f"{record.first_name.value} {record.last_name.value if record.last_name else ''}".strip()
+
             phones = (
                 ", ".join(p.value for p in record.phones)
                 or "[italic]No phones[/italic]"
@@ -49,15 +48,15 @@ class AllContactsScreen(Screen):
                 else "[italic]No birthday[/italic]"
             )
             email = (
-                record.email.value
-                if record.email and record.email.value
+                record.email
+                if record.email and record.email
                 else "[italic]No email[/italic]"
             )
 
             address = (
-                record.address.value
-                if record.address and record.address.value
+                record.address
+                if record.address and record.address
                 else "[italic]No address[/italic]"
             )
 
-            table.add_row(str(i), record.name.value, phones, birthday, email, address)
+            table.add_row(str(i), name, phones, birthday, email, address)

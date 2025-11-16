@@ -1,3 +1,5 @@
+from typing import List
+
 from personal_assistant.models.field import Email, Name, Phone, Birthday, Address
 from personal_assistant.models.exceptions import (
     PhoneAlreadyExistsError,
@@ -7,16 +9,18 @@ from personal_assistant.models.exceptions import (
 
 class Record:
     def __init__(self, name):
-        self.name = Name(name)
+        self.uuid = None
+        self.first_name = Name(name)
+        self.last_name: Name | None = None
         self.phones: list[Phone] = []
-        self.birthday = None
+        self.birthday: Birthday | None = None
         self.email = None
         self.address = None
 
     def add_phone(self, phone: str) -> None:
         if self.find_phone(phone):
             raise PhoneAlreadyExistsError(
-                f"Phone {phone} already exists for {self.name}"
+                f"Phone {phone} already exists for {self.first_name}"
             )
         phone_obj = Phone(phone)
         self.phones.append(phone_obj)
@@ -26,7 +30,7 @@ class Record:
             if phone.value == old_phone:
                 self.phones[idx] = Phone(new_phone)
                 return
-        raise PhoneNotFoundError(f"Phone {old_phone} not found for {self.name}")
+        raise PhoneNotFoundError(f"Phone {old_phone} not found for {self.first_name}")
 
     def find_phone(self, phone: str) -> str | None:
         for p in self.phones:
@@ -39,7 +43,7 @@ class Record:
             if p.value == phone:
                 del self.phones[idx]
                 return
-        raise PhoneNotFoundError(f"Phone {phone} not found for {self.name}")
+        raise PhoneNotFoundError(f"Phone {phone} not found for {self.first_name}")
 
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
@@ -54,4 +58,35 @@ class Record:
         self.address = Address(address)
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
+        return f"Contact name: {self.first_name.value}, phones: {'; '.join(p.value for p in self.phones)}"
+
+    @classmethod
+    def from_dict(cls, contact_data):
+        record = cls(contact_data["first_name"])
+        record.uuid = contact_data.get("uuid")
+        record.last_name = Name(contact_data.get("last_name"))
+        record.phones = [Phone(phone) for phone in contact_data.get("phones", [])]
+        birthday = contact_data.get("birthday")
+        if birthday:
+            record.birthday = Birthday(birthday)
+        emails: List[str] = contact_data.get("emails", [])
+        if emails:
+            record.email = emails[0]  # Assuming only one email for simplicity
+        else:
+            record.email = contact_data.get("email")
+        record.address = contact_data.get("address")
+        return record
+
+    def to_dict(self):
+        contact_data = {
+            "uuid": self.uuid,
+            "first_name": self.first_name.value,
+            "last_name": self.last_name.value if self.last_name else None,
+            "phones": [phone.value for phone in self.phones],
+            "birthday": (
+                self.birthday.value.strftime("%d.%m.%Y") if self.birthday else None
+            ),
+            "email": self.email,
+            "address": self.address,
+        }
+        return contact_data
