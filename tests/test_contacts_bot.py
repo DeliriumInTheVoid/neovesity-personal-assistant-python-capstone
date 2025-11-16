@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 
 
 from personal_assistant.models import (
-    Field, Name, Phone, Birthday, Record, AddressBook
+    Field, Name, Phone, Birthday, Record, AddressBook, Email
 )
 from personal_assistant.models.exceptions import (
     InvalidPhoneFormatError, InvalidBirthdayFormatError,
     PhoneAlreadyExistsError, ContactNotFoundError,
-    PhoneNotFoundError, RecordAlreadyExistsError
+    PhoneNotFoundError, RecordAlreadyExistsError, InvalidEmailFormatError,
 )
 from personal_assistant.cli.args_parsers import parse_input, ArgsParser
 from personal_assistant.use_cases.commands import (
@@ -42,6 +42,16 @@ class TestName:
     def test_name_str(self):
         name = Name("Jane")
         assert str(name) == "Jane"
+
+class TestEmail:
+    """Test Email class"""
+
+    def test_email_creation(self):
+        assert Email("john@gmail.com").value == "john@gmail.com"
+
+    def test_wrong_str(self):
+        with pytest.raises(InvalidEmailFormatError):
+            Email("john@@gmail..com")
 
 
 class TestPhone:

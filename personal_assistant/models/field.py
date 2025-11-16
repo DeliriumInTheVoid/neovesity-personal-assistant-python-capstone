@@ -7,9 +7,10 @@ from personal_assistant.models.exceptions import (
     InvalidEmailFormatError,
     InvalidTitleFormatError,
     InvalidTagFormatError,
+    InvalidEmailFormatError
 )
 
-__all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag"]
+__all__ = ["Field", "Name", "Birthday", "Phone", "Email", "Title", "Tag"]
 
 
 class Field:
@@ -18,7 +19,6 @@ class Field:
 
     def __str__(self):
         return str(self.value)
-
 
 class Name(Field):
     pass
