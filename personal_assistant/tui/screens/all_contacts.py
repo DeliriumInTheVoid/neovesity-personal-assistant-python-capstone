@@ -49,13 +49,13 @@ class AllContactsScreen(Screen):
             )
             email = (
                 record.email
-                if record.email and record.email
+                if record.email and record.email.value
                 else "[italic]No email[/italic]"
             )
 
             address = (
                 record.address
-                if record.address and record.address
+                if record.address and record.address.value
                 else "[italic]No address[/italic]"
             )
 

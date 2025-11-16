@@ -14,6 +14,7 @@ INDEX_CONTACT_PHONE = "contact_phone"
 INDEX_CONTACT_EMAIL = "contact_email"
 
 INDEX_NOTE_TITLE = "note_title"
+INDEX_NOTE_TAG = "note_tag"
 INDEX_NOTE_CREATION_DATE = "note_creation_date"
 
 CONTACT_INDEXES = [
@@ -25,6 +26,7 @@ CONTACT_INDEXES = [
 
 NOTE_INDEXES = [
     INDEX_NOTE_TITLE,
+    INDEX_NOTE_TAG,
     INDEX_NOTE_CREATION_DATE,
 ]
 

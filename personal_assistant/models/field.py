@@ -9,7 +9,7 @@ from personal_assistant.models.exceptions import (
     InvalidTagFormatError,
 )
 
-__all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag", "Address"]
+__all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag", "Email", "Address"]
 
 
 class Field:
@@ -42,60 +42,63 @@ class Birthday(Field):
 class Phone(Field):
 
     def __init__(self, value):
-        # normalized = self.normalize_ua_phone(value)
-        # if normalized is None:
-        #     raise InvalidPhoneFormatError(f"Invalid phone number: {value}")
-        super().__init__(value)
+        normalized = self.normalize_ua_phone(value)
+        if normalized is None:
+            raise InvalidPhoneFormatError(f"Invalid phone number: {value}")
+        super().__init__(normalized)
 
     @staticmethod
     def normalize_ua_phone(phone: str) -> str | None:
-        digits = re.sub(r"\D", "", phone)
+        # Remove extension part (x1234, ext1234, etc.) before processing
+        phone_without_ext = re.split(r'[x]|ext', phone.lower())[0]
 
+        # Extract only digits
+        digits = re.sub(r"\D", "", phone_without_ext)
+
+        # If empty after extraction, invalid
+        if not digits:
+            return None
+
+        # Remove international dialing prefix '00' if present
+        if digits.startswith("00"):
+            digits = digits[2:]
+
+        # First, check if it's already a valid MSISDN format (E.164)
+        # MSISDN should be: country code (1-3 digits) + national number (10-15 digits total)
+        if 10 <= len(digits) <= 15 and digits[0] != '0':
+            # Looks like it's already in international MSISDN format
+            return f"+{digits}"
+
+        # If not valid MSISDN, try to convert to Ukrainian MSISDN
         UA_CODES = {
-            "039",
-            "050",
-            "063",
-            "066",
-            "067",
-            "068",
-            "091",
-            "092",
-            "093",
-            "094",
-            "095",
-            "096",
-            "097",
-            "098",
-            "099",
+            "039", "050", "063", "066", "067", "068",
+            "091", "092", "093", "094",
+            "095", "096", "097", "098", "099"
         }
 
-        # Case 1: 380XXXXXXXXX
+        code = None
+        number_part = None
+
+        # Case 1: 380XXXXXXXXX (12 digits) - already Ukrainian MSISDN without +
         if digits.startswith("380") and len(digits) == 12:
             code = digits[3:6]
-            if code in UA_CODES:
-                return f"+{digits}"
-            return None
-
-        # Case 2: 0XXXXXXXXX
-        if digits.startswith("0") and len(digits) == 10:
+            number_part = digits[3:]
+        # Case 2: 0XXXXXXXXX (10 digits) - Ukrainian national format
+        elif digits.startswith("0") and len(digits) == 10:
             code = digits[1:4]
-            if code in UA_CODES:
-                return "+38" + digits
-            return None
-
-        # Case 3: 80XXXXXXXXX
-        if digits.startswith("80") and len(digits) == 11:
+            number_part = digits[1:]
+        # Case 3: 80XXXXXXXXX (11 digits) - Ukrainian with 8 prefix
+        elif digits.startswith("80") and len(digits) == 11:
             code = digits[2:5]
-            if code in UA_CODES:
-                return "+3" + digits
-            return None
-
-        # Case 4: 9 digits only
-        if len(digits) == 9:
+            number_part = digits[2:]
+        # Case 4: XXXXXXXXX (9 digits) - just the number without prefix
+        elif len(digits) == 9:
             code = digits[0:3]
-            if code in UA_CODES:
-                return "+380" + digits
-            return None
+            number_part = digits
+
+        # Validate Ukrainian operator code and return formatted number
+        if code and code in UA_CODES and number_part and len(number_part) == 9:
+            return f"+380{number_part}"
 
         return None
 
@@ -144,7 +147,8 @@ class Title(Field):
 
 class Tag(Field):
     def __init__(self, value):
-        if not value or len(value.strip()) <= 3:
+        tag_len = len(value.strip()) if value else 0
+        if not value or tag_len < 3 or tag_len > 10:
             raise InvalidTagFormatError(value)
 
         # Check for % and special symbols (allow alphanumeric, spaces, hyphens, underscores)

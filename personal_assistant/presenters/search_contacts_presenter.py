@@ -41,9 +41,9 @@ class SearchContactsPresenter(Presenter):
             # if contact.emails:
             #     output += f"Email: {', '.join(email.value for email in contact.emails)}\n"
             if contact.email:
-                output += f"Email: {contact.email}\n"
+                output += f"Email: {contact.email.value}\n"
             if contact.address:
-                output += f"Address: {contact.address}\n"
+                output += f"Address: {contact.address.value}\n"
             if contact.birthday:
                 output += f"Birthday: {contact.birthday.value.strftime('%d.%m.%Y')}\n"
 

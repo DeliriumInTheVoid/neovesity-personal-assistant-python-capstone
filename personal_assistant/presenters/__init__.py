@@ -11,6 +11,7 @@ from .show_help_presenter import ShowHelpPresenter
 from .show_phone_presenter import ShowPhonePresenter
 from .add_birthday_presenter import AddBirthdayPresenter
 from .show_upcoming_birthdays_presenter import ShowUpcomingBirthdaysPresenter
+from .generate_data_presenter import GenerateDataPresenter
 
 __all__ = [
     "AddContactPresenter",
@@ -26,5 +27,6 @@ __all__ = [
     "ShowPhonePresenter",
     "AddBirthdayPresenter",
     "ShowUpcomingBirthdaysPresenter",
+    "GenerateDataPresenter",
 ]
 

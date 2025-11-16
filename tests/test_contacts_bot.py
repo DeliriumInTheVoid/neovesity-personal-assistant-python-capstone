@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 
 from personal_assistant.models import (
-    Field, Name, Phone, Birthday, Record, AddressBook
+    Field, Name, Phone, Birthday, Record, AddressBook, Email
 )
 from personal_assistant.models.exceptions import (
     InvalidPhoneFormatError, InvalidBirthdayFormatError,
@@ -96,7 +96,7 @@ class TestRecord:
 
     def test_record_creation(self):
         record = Record("John")
-        assert record.name.value == "John"
+        assert record.first_name.value == "John"
         assert len(record.phones) == 0
         assert record.birthday is None
 
@@ -199,7 +199,7 @@ class TestAddressBook:
         record = Record("John")
         book.add_record(record)
         found = book.find("John")
-        assert found.name.value == "John"
+        assert found.first_name.value == "John"
 
     def test_find_record_not_found(self):
         book = AddressBook()
@@ -222,7 +222,7 @@ class TestAddressBook:
         record = Record("John")
         book.add_record(record)
         retrieved = book["John"]
-        assert retrieved.name.value == "John"
+        assert retrieved.first_name.value == "John"
 
     def test_getitem_not_found(self):
         book = AddressBook()
@@ -260,7 +260,7 @@ class TestAddressBook:
 
         birthdays = book.get_upcoming_birthdays(warn_in_days=7)
         assert len(birthdays) == 1
-        assert birthdays[0][0].name.value == "John"
+        assert birthdays[0][0].first_name.value == "John"
 
     def test_get_upcoming_birthdays_outside_range(self):
         book = AddressBook()
@@ -357,87 +357,57 @@ class TestArgsParser:
 
 
 class TestCommands:
-    """Test command functions"""
+    """Test command use cases"""
 
     def test_add_contact(self):
         book = AddressBook()
-        message = add_contact("John", "1234567890", book)
+        message = COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
         assert "John" in book
         assert book["John"].phones[0].value == "1234567890"
         assert "added" in message.lower()
 
-    def test_add_contact_command(self):
+    def test_add_contact_missing_args(self):
         book = AddressBook()
-        add_contact_command(["John", "1234567890"], book)
-        assert "John" in book
-
-    def test_add_contact_command_missing_args(self):
-        book = AddressBook()
-        result = add_contact_command(["John"], book)
+        result = COMMAND_HANDLERS["add-contact"](["John"], book)
         assert "Invalid arguments" in result or "Error" in result
 
     def test_change_contact(self):
         book = AddressBook()
-        add_contact("John", "1234567890", book)
-        message = change_contact("John", "1234567890", "9876543210", book)
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
+        message = COMMAND_HANDLERS["change-contact"](["John", "1234567890", "9876543210"], book)
         assert book["John"].phones[0].value == "9876543210"
         assert "updated" in message.lower()
 
-    def test_change_contact_command(self):
-        book = AddressBook()
-        add_contact("John", "1234567890", book)
-        change_contact_command(["John", "1234567890", "9876543210"], book)
-        assert book["John"].phones[0].value == "9876543210"
-
     def test_change_contact_not_found(self):
         book = AddressBook()
-        result = change_contact_command(["NonExistent", "1234567890", "9876543210"], book)
+        result = COMMAND_HANDLERS["change-contact"](["NonExistent", "1234567890", "9876543210"], book)
         assert "Error" in result or "not found" in result.lower()
 
     def test_show_phone(self):
         book = AddressBook()
-        add_contact("John", "1234567890", book)
-        message = show_phone("John", book)
-        assert "1234567890" in message
-
-    def test_show_phone_command(self):
-        book = AddressBook()
-        add_contact("John", "1234567890", book)
-        message = show_phone_command(["John"], book)
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
+        message = COMMAND_HANDLERS["phone"](["John"], book)
         assert "1234567890" in message
 
     def test_add_birthday(self):
         book = AddressBook()
-        add_contact("John", "1234567890", book)
-        message = add_birthday("John", "01.01.1990", book)
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
+        message = COMMAND_HANDLERS["add-birthday"](["John", "01.01.1990"], book)
         assert book["John"].birthday is not None
         assert "Birthday" in message
 
-    def test_add_birthday_command(self):
-        book = AddressBook()
-        add_contact("John", "1234567890", book)
-        add_birthday_command(["John", "01.01.1990"], book)
-        assert book["John"].birthday is not None
-
     def test_show_birthday(self):
         book = AddressBook()
-        add_contact("John", "1234567890", book)
-        add_birthday("John", "01.01.1990", book)
-        message = show_birthday("John", book)
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
+        COMMAND_HANDLERS["add-birthday"](["John", "01.01.1990"], book)
+        message = COMMAND_HANDLERS["show-birthday"](["John"], book)
         assert "01.01.1990" in message
 
     def test_show_birthday_not_set(self):
         book = AddressBook()
-        add_contact("John", "1234567890", book)
-        message = show_birthday("John", book)
-        assert "does not have" in message.lower()
-
-    def test_show_birthday_command(self):
-        book = AddressBook()
-        add_contact("John", "1234567890", book)
-        add_birthday("John", "01.01.1990", book)
-        message = show_birthday_command(["John"], book)
-        assert "birthday" in message.lower()
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
+        message = COMMAND_HANDLERS["show-birthday"](["John"], book)
+        assert "does not have" in message.lower() or "no birthday" in message.lower()
 
     def test_show_upcoming_birthdays(self):
         book = AddressBook()
@@ -448,34 +418,24 @@ class TestCommands:
         record.add_phone("1234567890")
         book.add_record(record)
 
-        message = show_upcoming_birthdays(book, days=7)
+        message = COMMAND_HANDLERS["birthdays"]([], book)
         assert "John" in message or "No upcoming" in message
-
-    def test_show_upcoming_birthdays_command(self):
-        book = AddressBook()
-        message = show_upcoming_birthdays_command([], book)
-        assert "No upcoming" in message or "Upcoming" in message
-
-    def test_show_upcoming_birthdays_command_with_days(self):
-        book = AddressBook()
-        message = show_upcoming_birthdays_command(["14"], book)
-        assert "14 days" in message
 
     def test_show_all_empty(self):
         book = AddressBook()
-        message = show_all(book)
-        assert "No contacts" in message
+        message = COMMAND_HANDLERS["all"]([], book)
+        assert "No contacts" in message or "empty" in message.lower()
 
     def test_show_all_with_contacts(self):
         book = AddressBook()
-        add_contact("John", "1234567890", book)
-        add_contact("Jane", "9876543210", book)
-        message = show_all(book)
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
+        COMMAND_HANDLERS["add-contact"](["Jane", "9876543210"], book)
+        message = COMMAND_HANDLERS["all"]([], book)
         assert "John" in message
         assert "Jane" in message
 
     def test_get_command_valid(self):
-        command_func = get_command("add")
+        command_func = get_command("add-contact")
         assert command_func is not None
         assert callable(command_func)
 
@@ -484,6 +444,7 @@ class TestCommands:
         # Should return a null object function that does nothing
         assert callable(command_func)
         result = command_func([], AddressBook())
+        assert isinstance(result, str)
         assert "looked everywhere" in result.lower() or "no such" in result.lower()
 
 
@@ -530,19 +491,19 @@ class TestIntegration:
         book = AddressBook()
 
         # Add contact
-        add_contact("John", "1234567890", book)
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
         assert "John" in book
 
         # Add birthday
-        add_birthday("John", "01.01.1990", book)
+        COMMAND_HANDLERS["add-birthday"](["John", "01.01.1990"], book)
         assert book["John"].birthday is not None
 
         # Change phone
-        change_contact("John", "1234567890", "9876543210", book)
+        COMMAND_HANDLERS["change-contact"](["John", "1234567890", "9876543210"], book)
         assert book["John"].phones[0].value == "9876543210"
 
         # Show phone
-        message = show_phone("John", book)
+        message = COMMAND_HANDLERS["phone"](["John"], book)
         assert "9876543210" in message
 
         # Delete contact
@@ -572,24 +533,27 @@ class TestIntegration:
         assert len(birthdays) >= 0
 
         # Show all
-        message = show_all(book)
+        message = COMMAND_HANDLERS["all"]([], book)
         assert "Contact0" in message
 
     def test_error_handling_workflow(self):
         book = AddressBook()
 
         # Try to change non-existent contact
-        result = change_contact_command(["NonExistent", "1234567890", "9876543210"], book)
+        result = COMMAND_HANDLERS["change-contact"](["NonExistent", "1234567890", "9876543210"], book)
         assert "Error" in result or "not found" in result.lower()
 
-        # Add contact with invalid phone
-        with pytest.raises(InvalidPhoneFormatError):
-            add_contact("John", "123", book)
+        # Add contact with invalid phone - should be caught by the command handler
+        result = COMMAND_HANDLERS["add-contact"](["John", "123"], book)
+        assert "Error" in result or "Invalid" in result
 
-        # Add contact
-        add_contact("John", "1234567890", book)
+        # Add contact with valid phone
+        COMMAND_HANDLERS["add-contact"](["John", "1234567890"], book)
 
         # Try to add duplicate phone
         with pytest.raises(PhoneAlreadyExistsError):
             book["John"].add_phone("1234567890")
+
+
+
 

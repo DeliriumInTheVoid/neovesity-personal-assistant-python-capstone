@@ -4,12 +4,13 @@ from personal_assistant.models.exceptions import TagAlreadyExistsError
 
 
 class Note:
-    def __init__(self, title: str, description: str = ""):
+    def __init__(self, title: str, description: str = "", tags: list[Tag] = None):
         self.uuid = None
         self.title = Title(title)
         self.creation_date = datetime.now()
         self.description = description
-        self.tags: list[Tag] = []
+        self.tags: list[Tag] = tags if tags is not None else []
+        self.contact_ids: set[str] = set()
 
     def add_tag(self, tag: str) -> None:
         """Add a tag to the note if it doesn't already exist."""
@@ -42,11 +43,11 @@ class Note:
     @classmethod
     def from_dict(cls, note_data):
         content = note_data.get("content") or note_data.get("description", "")
-         # Additional fields can be set here
-        note = cls(note_data["title"], content)
+        tags = [Tag(tag) for tag in note_data.get("tags", []) if tag]
+        note = cls(note_data["title"], content, tags)
         note.uuid = note_data.get("uuid")
         # note.creation_date = datetime.fromisoformat(note_data["creation_date"])
-        note.tags = [Tag(tag) for tag in note_data.get("tags", [])]
+        note.contact_ids = set(note_data.get("contact_ids", []))
         return note
 
     def to_dict(self):
@@ -57,5 +58,5 @@ class Note:
             # will be stored as 'content' in storage, may be will add 'description' as well
             "content": self.description,
             "tags": [tag.value for tag in self.tags],
+            "contact_ids": list(self.contact_ids),
         }
-

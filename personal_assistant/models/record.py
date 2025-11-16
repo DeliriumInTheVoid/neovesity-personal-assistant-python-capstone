@@ -14,8 +14,8 @@ class Record:
         self.last_name: Name | None = None
         self.phones: list[Phone] = []
         self.birthday: Birthday | None = None
-        self.email = None
-        self.address = None
+        self.email: Email | None = None
+        self.address: Address | None = None
 
     def add_phone(self, phone: str) -> None:
         if self.find_phone(phone):
@@ -65,16 +65,17 @@ class Record:
         record = cls(contact_data["first_name"])
         record.uuid = contact_data.get("uuid")
         record.last_name = Name(contact_data.get("last_name"))
-        record.phones = [Phone(phone) for phone in contact_data.get("phones", [])]
+        record.phones = [Phone(phone) for phone in contact_data.get("phones", []) if phone]
         birthday = contact_data.get("birthday")
         if birthday:
             record.birthday = Birthday(birthday)
         emails: List[str] = contact_data.get("emails", [])
         if emails:
-            record.email = emails[0]  # Assuming only one email for simplicity
-        else:
-            record.email = contact_data.get("email")
-        record.address = contact_data.get("address")
+            record.email = Email(emails[0])  # Assuming only one email for simplicity
+        elif contact_data.get("email"):
+            record.email = Email(contact_data.get("email"))
+        if contact_data.get("address"):
+            record.address = Address(contact_data.get("address"))
         return record
 
     def to_dict(self):
@@ -86,7 +87,7 @@ class Record:
             "birthday": (
                 self.birthday.value.strftime("%d.%m.%Y") if self.birthday else None
             ),
-            "email": self.email,
-            "address": self.address,
+            "email": self.email.value if self.email else None,
+            "address": self.address.value if self.address else None,
         }
         return contact_data

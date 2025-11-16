@@ -157,7 +157,7 @@ class AddressBookStorage(BaseStorage):
             for uuid in uuids:
                 contact = self.heap.read_contact(uuid)
                 if contact:
-                    contacts.append(contact)
+                    contacts.append(Record.from_dict(contact))
 
         return contacts
 
@@ -177,7 +177,7 @@ class AddressBookStorage(BaseStorage):
         for uuid in uuids:
             contact = self.heap.read_contact(uuid)
             if contact:
-                contacts.append(contact)
+                contacts.append(Record.from_dict(contact))
 
         return contacts
 
@@ -197,7 +197,7 @@ class AddressBookStorage(BaseStorage):
         for uuid in uuids:
             contact = self.heap.read_contact(uuid)
             if contact:
-                contacts.append(contact)
+                contacts.append(Record.from_dict(contact))
 
         return contacts
 
