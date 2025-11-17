@@ -33,7 +33,7 @@ def generate_contacts(num_contacts: int = 10) -> Generator[Record, None, None]:
         record.add_birthday(birthday)
         record.add_email(email)
 
-        for _ in range(fake.random_int(min=0, max=2)):
+        for _ in range(fake.random_int(min=1, max=2)):
             record.add_phone(fake.phone_number())
 
         record.add_address(fake.address().replace("\n", ", "))
