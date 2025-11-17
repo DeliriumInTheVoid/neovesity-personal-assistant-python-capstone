@@ -6,9 +6,10 @@ with automatic index synchronization.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from personal_assistant.storage.heap_storage import HeapStorage
 from personal_assistant.storage.index_manager import IndexManager
+from personal_assistant.config import AppConfig
 
 
 class BaseStorage(ABC):
@@ -21,12 +22,17 @@ class BaseStorage(ABC):
     - Consistent API for derived classes
     """
 
-    def __init__(self, data_root: str = "demo_data", index_root: str = "demo_index"):
+    def __init__(self, data_root: Optional[str] = None, index_root: Optional[str] = None):
         """
         Args:
-            data_root: Directory for storing data
-            index_root: Directory for storing indexes
+            data_root: Directory for storing data (None = use config default)
+            index_root: Directory for storing indexes (None = use config default)
         """
+        if data_root is None or index_root is None:
+            data_path, index_path = AppConfig.get_storage_paths()
+            data_root = data_root or data_path
+            index_root = index_root or index_path
+
         self.heap = HeapStorage(data_root)
         self.index_manager = IndexManager(index_root)
         self._ensure_indexes()

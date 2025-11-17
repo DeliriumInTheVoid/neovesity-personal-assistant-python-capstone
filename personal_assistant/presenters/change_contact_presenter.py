@@ -38,6 +38,16 @@ class ChangeContactPresenter(Presenter):
             app.log_widget.write(f"[bold red]Contact '{search_term}' not found[/bold red]")
             return
 
+        if len(contacts) > 1:
+            app.log_widget.write(
+                "[bold yellow]Multiple contacts found. Please be more specific.[/bold yellow]"
+            )
+            for contact in contacts:
+                app.log_widget.write(
+                    f"- {contact.first_name.value} {contact.last_name.value} (UUID: {contact.uuid})"
+                )
+            return
+
         existing_contact = contacts[0]
 
         app.run_worker(self._handle_change_contact(app, existing_contact))
@@ -53,7 +63,7 @@ class ChangeContactPresenter(Presenter):
             try:
                 record = Record.from_dict(contact_data)
                 if existing_contact:
-                    record.uuid = existing_contact.uuid  # Preserve the original ID
+                    record.uuid = existing_contact.uuid  # preserve the original ID
                 self.storage.update_record(record)
                 app.log_widget.write(f"[bold green]✅ {message}[/bold green]")
             except Exception as e:

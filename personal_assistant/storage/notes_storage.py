@@ -102,17 +102,18 @@ class NotesStorage(BaseStorage):
         if not old_note:
             return False
 
-        self._remove_from_indexes(old_note.uuid, old_note)
+        self._remove_from_indexes(record.uuid, old_note)
 
         raw_note = record.to_dict()
         if self.heap.update_note(record.uuid, raw_note):
             self._add_to_indexes(record.uuid, raw_note)
             return True
+
         return False
 
-    def delete_record(self, note_uuid: str) -> bool:
+    def delete_note(self, note_uuid: str) -> bool:
         """
-        Delete note and remove it from indexes.
+        Delete note.
 
         Returns:
             True if successful, False if note not found
@@ -125,7 +126,7 @@ class NotesStorage(BaseStorage):
 
         return self.heap.delete_note(note_uuid)
 
-    def get_all_records(self) -> List[Note]:
+    def get_all_notes(self) -> List[Note]:
         """
         Get all notes.
 
@@ -214,8 +215,8 @@ class NotesStorage(BaseStorage):
         tag_lower = tag.lower()
 
         return [
-            note for note in all_notes
-            if tag_lower in [t.value.lower() for t in note.tags]
+            Note.from_dict(note) for note in all_notes
+            if tag_lower in [t.lower() for t in note.get('tags', [])]
         ]
 
     def get_notes_by_contact(self, contact_uuid: str) -> List[Note]:

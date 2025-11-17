@@ -48,7 +48,7 @@ class NoteFormScreen(ModalScreen):
 
                 yield Label("Creation Date:", classes="field-label")
                 creation_date_str = (
-                    self.existing_note.created_at.value.strftime("%d.%m.%Y %H:%M:%S")
+                    self.existing_note.creation_date.strftime("%d.%m.%Y %H:%M:%S")
                     if self.existing_note
                     else datetime.now().strftime("%d.%m.%Y %H:%M:%S")
                 )
@@ -61,7 +61,7 @@ class NoteFormScreen(ModalScreen):
                 yield Label("Description:", classes="field-label")
                 yield TextArea(
                     id="description-input",
-                    text=self.existing_note.content.value if self.existing_note else "",
+                    text=self.existing_note.description if self.existing_note else "",
                 )
 
                 yield Label("Tags (comma-separated, each > 3 symbols, no % & special symbols):", classes="field-label")
@@ -134,8 +134,8 @@ class NoteFormScreen(ModalScreen):
             }
 
             if self.is_update and self.existing_note:
-                note_data["id"] = self.existing_note.uuid
-                note_data["created_at"] = self.existing_note.created_at.value.isoformat()
+                note_data["uuid"] = self.existing_note.uuid
+                note_data["created_at"] = self.existing_note.creation_date.isoformat()
 
             self.dismiss((True, f"Note '{title}' saved", note_data))
 

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-assistant"
+version = "1.0.0"
+description = "A personal assistant application for managing contacts and notes"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+authors = [
+    {name = "NeoVersity Student"}
+]
+keywords = ["personal-assistant", "contacts", "notes", "cli", "tui"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Office/Business",
+]
+
+dependencies = [
+    "faker>=18.9.0",
+    "textual==6.6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.2",
+]
+
+[project.scripts]
+personal-assistant = "personal_assistant.main:main"
+
+[tool.setuptools]
+packages = ["personal_assistant"]
+
+[tool.setuptools.package-data]
+personal_assistant = ["**/*.py"]
+

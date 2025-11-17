@@ -46,7 +46,9 @@ class Note:
         tags = [Tag(tag) for tag in note_data.get("tags", []) if tag]
         note = cls(note_data["title"], content, tags)
         note.uuid = note_data.get("uuid")
-        # note.creation_date = datetime.fromisoformat(note_data["creation_date"])
+        creation_date = note_data.get("creation_date", None)
+        if creation_date:
+            note.creation_date = datetime.fromisoformat(creation_date)
         note.contact_ids = set(note_data.get("contact_ids", []))
         return note
 
