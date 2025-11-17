@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from personal_assistant.models.record import Record
 from personal_assistant.models.exceptions import RecordAlreadyExistsError, ContactNotFoundError
 
+
 class AddressBook(UserDict):
     def __setitem__(self, key, value):
         if not isinstance(value, Record):

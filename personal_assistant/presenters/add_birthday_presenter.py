@@ -3,6 +3,7 @@ from personal_assistant.presenters.presenter import Presenter
 from personal_assistant.storage.address_book import AddressBookStorage
 from personal_assistant.models.field import Birthday
 
+
 if TYPE_CHECKING:
     from personal_assistant.tui.app import AddressBookApp
 

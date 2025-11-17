@@ -9,6 +9,7 @@ from personal_assistant.models.exceptions import (
     InvalidTagFormatError,
 )
 
+
 __all__ = ["Field", "Name", "Birthday", "Phone", "Title", "Tag", "Email", "Address"]
 
 
@@ -85,7 +86,7 @@ class Phone(Field):
             number_part = digits[3:]
         # Case 2: 0XXXXXXXXX (10 digits) - Ukrainian national format
         elif digits.startswith("0") and len(digits) == 10:
-            code = digits[1:4]
+            code = digits[0:3]
             number_part = digits[1:]
         # Case 3: 80XXXXXXXXX (11 digits) - Ukrainian with 8 prefix
         elif digits.startswith("80") and len(digits) == 11:

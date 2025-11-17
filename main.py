@@ -9,6 +9,7 @@ import os
 import sys
 from personal_assistant.tui.app import AddressBookApp
 
+
 if __name__ == "__main__":
     # Determine mode: check environment variable first, then command-line argument
     mode = os.environ.get("ASSISTANT_MODE", "test")

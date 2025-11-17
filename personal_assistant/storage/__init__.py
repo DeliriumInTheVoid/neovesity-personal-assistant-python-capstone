@@ -27,6 +27,7 @@ from personal_assistant.storage.constants import (
     ALL_INDEXES,
 )
 
+
 __all__ = [
     'HeapStorage',
     'IndexManager',

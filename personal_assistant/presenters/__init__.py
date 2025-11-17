@@ -19,6 +19,7 @@ from .change_note_presenter import ChangeNotePresenter
 from .delete_contact_presenter import DeleteContactPresenter
 from .delete_note_presenter import DeleteNotePresenter
 
+
 __all__ = [
     "AddContactPresenter",
     "ChangeContactPresenter",
