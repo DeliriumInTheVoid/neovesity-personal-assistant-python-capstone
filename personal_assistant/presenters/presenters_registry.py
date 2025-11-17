@@ -11,11 +11,17 @@ from personal_assistant.presenters import (
     ShowBirthdayPresenter,
     ShowUpcomingBirthdaysPresenter,
     SearchContactsPresenter,
+    SearchContactsByPhonePresenter,
+    SearchContactsByEmailPresenter,
     AddNotePresenter,
     SearchNotesPresenter,
+    SearchNotesByTagPresenter,
     ShowAllNotesPresenter,
     ShowHelpPresenter,
     GenerateDataPresenter,
+    ChangeNotePresenter,
+    DeleteContactPresenter,
+    DeleteNotePresenter
 )
 
 
@@ -23,9 +29,6 @@ class PresentersRegistry:
     def __init__(self, address_book_storage: AddressBookStorage, notes_storage: NotesStorage):
         self.commands: Dict[str, Presenter] = {}
 
-        # delete-contact {first_name} {user last_name}
-        # delete-note {note title}
-        # change-note
         # search note-tags
         # search by phone number
 
@@ -38,8 +41,14 @@ class PresentersRegistry:
         self.commands['show-birthday'] = ShowBirthdayPresenter(address_book_storage)        #
         self.commands['birthdays'] = ShowUpcomingBirthdaysPresenter(address_book_storage)   #
         self.commands['search'] = SearchContactsPresenter(address_book_storage)             #
+        self.commands['search-phone'] = SearchContactsByPhonePresenter(address_book_storage) #
+        self.commands['search-email'] = SearchContactsByEmailPresenter(address_book_storage) #
         self.commands['add-note'] = AddNotePresenter(notes_storage)                         #
+        self.commands['change-note'] = ChangeNotePresenter(notes_storage)      #
         self.commands['search-notes'] = SearchNotesPresenter(notes_storage)                 #
+        self.commands['search-tag'] = SearchNotesByTagPresenter(notes_storage)              #
+        self.commands['delete-contact'] = DeleteContactPresenter(address_book_storage)      #
+        self.commands['delete-note'] = DeleteNotePresenter(notes_storage)                   #
         self.commands['all-notes'] = ShowAllNotesPresenter(notes_storage)                   #
         self.commands['generate-data'] = GenerateDataPresenter(address_book_storage, notes_storage) #
 

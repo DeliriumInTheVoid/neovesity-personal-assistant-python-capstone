@@ -17,6 +17,7 @@ from personal_assistant.presenters.presenters_registry import PresentersRegistry
 from personal_assistant.tui.screens.help.help import HelpScreen
 from personal_assistant.storage.address_book import AddressBookStorage
 from personal_assistant.storage.notes_storage import NotesStorage
+from personal_assistant.config import AppConfig
 
 
 class AddressBookApp(App):
@@ -26,16 +27,22 @@ class AddressBookApp(App):
         "hello",
         "help",
         "add-contact",
+        "search",
+        "search-phone",
+        "search-email",
         "search-notes",
+        "search-tag",
+        "all",
         "all-notes",
         "add-note",
         "change-contact",
+        "change-note",
+        "delete-contact",
+        "delete-note",
         "phone",
-        "all",
-        "add-birthday",
+        #"add-birthday",
         "show-birthday",
         "birthdays",
-        "search",
         "generate-data",
         "clear",
         "exit",
@@ -121,6 +128,36 @@ class AddressBookApp(App):
         margin: 0 1;
     }
 
+    ConfirmationScreen {
+        align: center middle;
+    }
+
+    #dialog {
+        grid-size: 2;
+        grid-gutter: 1 2;
+        grid-rows: 1fr 3;
+        padding: 0 1;
+        width: 60;
+        height: 11;
+        border: thick $primary;
+        background: $surface;
+    }
+
+    #question {
+        column-span: 2;
+        height: 100%;
+        width: 100%;
+        content-align: center middle;
+    }
+
+    #yes {
+        width: 100%;
+    }
+
+    #no {
+        width: 100%;
+    }
+
     NoteFormScreen {
         layout: vertical;
     }
@@ -191,8 +228,13 @@ class AddressBookApp(App):
         css_path=None,
         watch_css: bool = False,
         ansi_color: bool = False,
+        mode: str = "test",
     ):
         super().__init__(driver_class, css_path, watch_css, ansi_color)
+
+        # Set application mode
+        AppConfig.set_mode(mode)
+
         self.log_widget = None
         self.address_book_storage = AddressBookStorage()
         self.notes_storage = NotesStorage()
@@ -272,15 +314,26 @@ class AddressBookApp(App):
         command = self.command_registry.get(command_id)
 
         if not command:
-            self.log_widget.write(
-                f"[bold red]🦥 Uhh... I looked everywhere. No such '{command_id}'.[/bold red]"
-            )
-            help_command = self.command_registry.get("help")
-            if help_command:
-                await help_command.execute_tui(self, [])
+            self.show_inline_help(command_id)
             return
 
         try:
             await command.execute_tui(self, args)
         except Exception as e:
             self.log_widget.write(f"[bold red]An error occurred: {e}[/bold red]")
+
+    def show_inline_help(self, command_id:str) -> None:
+        """Show inline help in the log widget."""
+        self.log_widget.write(
+            f"[bold red]🦥 Uhh... I looked everywhere. No such '{command_id}'.[/bold red]"
+        )
+
+        output = "[bold green]Available commands:[/bold green]\n\n"
+
+        for cmd_name, presenter in sorted(self.command_registry.commands.items()):
+            if cmd_name != "exit":
+                output += f"[bold cyan]{cmd_name:20}[/bold cyan] - {presenter.description}\n"
+
+        output += f"[bold cyan]{'exit':20}[/bold cyan] - Exit the application\n"
+
+        self.log_widget.write(output)

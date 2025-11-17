@@ -19,7 +19,7 @@ class ShowAllNotesPresenter(Presenter):
         return "Shows all notes"
 
     async def execute_tui(self, app: "AddressBookApp", args: list[str]) -> None:
-        notes = self.storage.get_all_records()
+        notes = self.storage.get_all_notes()
 
         if not notes:
             app.log_widget.write("[bold yellow]No notes found[/bold yellow]")
