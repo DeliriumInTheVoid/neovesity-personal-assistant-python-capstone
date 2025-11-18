@@ -8,6 +8,32 @@ from pathlib import Path
 from typing import Tuple
 
 
+def _detect_default_mode() -> str:
+    """
+    Detect the default mode based on how the application is running.
+
+    Returns:
+        "release" if running from installed package, "test" if running from source/IDE
+    """
+    # Check if running from installed package
+    # When installed via pip, the package is in site-packages
+    package_path = Path(__file__).resolve().parent
+
+    # Check if we're in site-packages (installed) or in project source
+    if "site-packages" in str(package_path) or "dist-packages" in str(package_path):
+        return "release"
+
+    # Check if pyproject.toml or setup.py exists in parent directories (development mode)
+    current = package_path.parent
+    for _ in range(3):  # Check up to 3 levels up
+        if (current / "pyproject.toml").exists() or (current / "setup.py").exists():
+            return "test"
+        current = current.parent
+
+    # Default to release if uncertain
+    return "release"
+
+
 class AppConfig:
     """
     Application configuration manager.
@@ -15,9 +41,13 @@ class AppConfig:
     Handles storage paths for different modes:
     - Test mode: uses demo_data/ and demo_index/ in the project directory
     - Release mode: uses ~/.assistant/data and ~/.assistant/index in user's home directory
+
+    Auto-detects mode:
+    - Running from IDE/source: defaults to "test" mode
+    - Running from installed package: defaults to "release" mode
     """
 
-    _mode = "test"  # Default mode
+    _mode = _detect_default_mode()  # Auto-detect based on installation
 
     @classmethod
     def set_mode(cls, mode: str) -> None:

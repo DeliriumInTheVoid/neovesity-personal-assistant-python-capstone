@@ -228,11 +228,13 @@ class AddressBookApp(App):
         css_path=None,
         watch_css: bool = False,
         ansi_color: bool = False,
-        mode: str = "test",
+        mode: str | None = None,
     ):
         super().__init__(driver_class, css_path, watch_css, ansi_color)
 
-        # Set application mode
+        # Set application mode (auto-detect if not provided)
+        if mode is None:
+            mode = AppConfig.get_mode()
         AppConfig.set_mode(mode)
 
         self.log_widget = None

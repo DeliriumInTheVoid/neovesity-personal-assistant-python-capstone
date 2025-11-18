@@ -64,7 +64,7 @@ def generate_notes(
 
         num_tags = random.randint(1, 5)
         tags = [
-            Tag(fake.pystr(min_chars=3, max_chars=10)) for _ in range(num_tags)
+            Tag(fake.pystr(min_chars=4, max_chars=10)) for _ in range(num_tags)
         ]
 
         note = Note(title, description, tags)

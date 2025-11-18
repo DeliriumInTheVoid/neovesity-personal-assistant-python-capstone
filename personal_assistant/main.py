@@ -1,12 +1,14 @@
 import os
 import sys
 from personal_assistant.tui.app import AddressBookApp
+from personal_assistant.config import AppConfig
 
 
 def main():
     """Main entry point for the personal assistant application."""
-    # Determine mode: check environment variable first, then command-line argument
-    mode = os.environ.get("ASSISTANT_MODE", "test")
+    # Auto-detect mode based on installation (release) vs source (test)
+    # Can be overridden via environment variable or command-line argument
+    mode = os.environ.get("ASSISTANT_MODE", AppConfig.get_mode())
 
     # Allow override via command-line: --release or --test
     if "--release" in sys.argv:
